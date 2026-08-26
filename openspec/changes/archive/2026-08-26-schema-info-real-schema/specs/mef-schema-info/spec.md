@@ -38,13 +38,13 @@ one, and whatever format constraints (e.g. `pattern`, `enum`, `minimum`,
   `patternProperties` regular expressions
 - **THEN** the system returns the metadata declared for that pattern
 
-### Requirement: Listing fields at a given point in the schema
+### Requirement: Listing all top-level fields
 When a JSON Pointer is given, the system SHALL return metadata for every
 field declared directly under the node it identifies. When no pointer is
 given, the system SHALL return metadata for every field declared at the
 top level of the schema.
 
-#### Scenario: No pointer given
+#### Scenario: No field path given
 - **WHEN** a field listing is requested with no pointer
 - **THEN** the system returns a list covering every top-level field in
   the schema, each with its type, required status, and format
