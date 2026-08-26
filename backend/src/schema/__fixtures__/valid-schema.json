@@ -1,0 +1,25 @@
+{
+  "id": "https://mef.example.com/schemas/mef-config.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "MEF Config",
+  "type": "object",
+  "properties": {
+    "modelName": {
+      "$ref": "#/definitions/modelName"
+    },
+    "modelType": {
+      "$ref": "#/definitions/modelType"
+    }
+  },
+  "required": ["modelName", "modelType"],
+  "definitions": {
+    "modelName": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "modelType": {
+      "type": "string",
+      "enum": ["PythonModel", "JavaModel", "SparkApplication", "Triton"]
+    }
+  }
+}
