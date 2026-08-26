@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sanitized union-schema fixture",
+  "description": "Reproduces the structural patterns found in the real MEF config schema (discriminated unions, required-property-discriminated unions, nested unions, single-branch unions, and a malformed node) without reproducing any of its actual content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["applications", "secretConfig"],
+  "properties": {
+    "applications": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "required": ["name", "deployStrategy", "image"],
+            "properties": {
+              "name": { "type": "string" },
+              "deployStrategy": { "enum": ["Create"] },
+              "image": { "type": "string" }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "required": ["name", "deployStrategy", "targetVersion"],
+            "properties": {
+              "name": { "type": "string" },
+              "deployStrategy": { "enum": ["Update"] },
+              "targetVersion": { "type": "string" }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "required": ["name", "deployStrategy"],
+            "properties": {
+              "name": { "type": "string" },
+              "deployStrategy": { "enum": ["Delete"] }
+            }
+          }
+        ]
+      }
+    },
+    "secretConfig": {
+      "type": "object",
+      "required": ["name", "valueType", "valueFrom"],
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string" },
+            "valueType": { "enum": ["Keytab"] },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "required": ["vaultSecretRef"],
+                  "properties": {
+                    "vaultSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": { "path": { "type": "string" } }
+                    }
+                  }
+                },
+                {
+                  "additionalProperties": false,
+                  "required": ["vaultADSecretRef"],
+                  "properties": {
+                    "vaultADSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": { "path": { "type": "string" } }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string" },
+            "valueType": { "enum": ["BasicAuth"] },
+            "valueFrom": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["vaultSecretRef"],
+              "properties": {
+                "vaultSecretRef": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["path", "keySet"],
+                  "properties": {
+                    "path": { "type": "string" },
+                    "keySet": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["username", "password"],
+                      "properties": {
+                        "username": { "type": "string" },
+                        "password": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "single": {
+      "type": "object",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": { "value": { "type": "string" } }
+        }
+      ]
+    },
+    "broken": {
+      "socketTimeout": {
+        "type": "integer",
+        "minimum": 1
+      }
+    }
+  }
+}

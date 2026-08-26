@@ -65,7 +65,7 @@ describe("validateConfig", () => {
     expect(errors.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("validates oneOf against the first branch only", async () => {
+  it("validates oneOf using standard semantics (matches any branch)", async () => {
     const matchesFirstBranch = await validateConfig(schemaPath, {
       modelName: "my-model",
       modelType: "PythonModel",
@@ -73,14 +73,23 @@ describe("validateConfig", () => {
     });
     expect(matchesFirstBranch).toEqual([]);
 
-    const matchesOnlyLaterBranch = await validateConfig(schemaPath, {
+    const matchesSecondBranch = await validateConfig(schemaPath, {
       modelName: "my-model",
       modelType: "PythonModel",
       runtime: { kind: "java" },
     });
-    expect(matchesOnlyLaterBranch).toContainEqual(
-      expect.objectContaining({ path: "/runtime/kind" }),
-    );
+    expect(matchesSecondBranch).toEqual([]);
+  });
+
+  it("attributes a union failure to a single error, not every branch's failures", async () => {
+    const errors = await validateConfig(schemaPath, {
+      modelName: "my-model",
+      modelType: "PythonModel",
+      runtime: { kind: "ruby" },
+    });
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0].path).toBe("/runtime/kind");
   });
 
   it("compiles the validator only once across multiple calls", async () => {

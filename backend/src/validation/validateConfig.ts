@@ -1,6 +1,6 @@
 import Ajv, { type ErrorObject, type ValidateFunction } from "ajv-draft-04";
 import { getSchema } from "../schema/loadSchema.js";
-import { collapseFirstBranch } from "./collapseFirstBranch.js";
+import { attributeUnionErrors } from "./branchErrors.js";
 
 export interface ValidationError {
   path: string;
@@ -15,10 +15,15 @@ async function getValidate(schemaPath: string): Promise<ValidateFunction> {
   }
 
   const schema = await getSchema(schemaPath);
-  const collapsedSchema = collapseFirstBranch(schema);
 
-  const ajv = new Ajv({ allErrors: true });
-  cachedValidate = ajv.compile(collapsedSchema as object);
+  // strict: false — the real MEF config schema contains nodes with
+  // keywords Ajv doesn't specifically recognize (e.g. a keyword sitting
+  // outside `properties`, an authoring defect in the schema itself); the
+  // validator must still compile and validate against whatever the
+  // schema actually declares rather than refusing to load. See
+  // docs/SCHEMA_ISSUES.md for the specific defects found.
+  const ajv = new Ajv({ allErrors: true, strict: false });
+  cachedValidate = ajv.compile(schema as object);
   return cachedValidate;
 }
 
@@ -40,9 +45,12 @@ function toValidationErrors(errors: ErrorObject[]): ValidationError[] {
 
 /**
  * Validates a MEF config against the cached MEF JSON Schema, with
- * oneOf/anyOf validated against their first branch only (Phase 1
- * limitation, see collapseFirstBranch). Returns an empty array when the
- * config is valid.
+ * oneOf/anyOf validated using standard JSON Schema semantics. When a
+ * union fails, only the errors of the branch the config's own values
+ * indicate were intended are reported (see branchErrors.ts) — the
+ * valid/invalid verdict itself always comes from Ajv's standard
+ * semantics and is never affected by that attribution. Returns an empty
+ * array when the config is valid.
  */
 export async function validateConfig(
   schemaPath: string,
@@ -53,7 +61,7 @@ export async function validateConfig(
   if (valid) {
     return [];
   }
-  return toValidationErrors(validate.errors ?? []);
+  return toValidationErrors(attributeUnionErrors(validate.errors ?? []));
 }
 
 /** Test-only escape hatch to reset the module-level cache between tests. */

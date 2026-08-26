@@ -1,8 +1,5 @@
 import { getSchema } from "../schema/loadSchema.js";
-import {
-  collapseFirstBranch,
-  isPlainObject,
-} from "../validation/collapseFirstBranch.js";
+import { collapseFirstBranch, isPlainObject } from "../schema/schemaUtils.js";
 
 export interface FieldInfo {
   path: string;

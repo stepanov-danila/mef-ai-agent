@@ -4,10 +4,11 @@ export function isPlainObject(value: unknown): value is Record<string, unknown> 
 
 /**
  * Recursively replaces every `oneOf`/`anyOf` node in a JSON Schema with
- * that node merged with its first branch only, per the project's
- * documented Phase 1 limitation (validate the first branch, not the
- * standard "exactly one"/"at least one" semantics). Does not mutate the
- * input; returns a new schema.
+ * that node merged with its first branch only. Used by `mef-schema-info`
+ * for its own field lookups (see openspec/changes/fix-union-validation
+ * proposal.md - Out of scope: mef-config-validation no longer uses this
+ * for validation itself, which now uses standard oneOf/anyOf semantics).
+ * Does not mutate the input; returns a new schema.
  */
 export function collapseFirstBranch(schema: unknown): unknown {
   if (Array.isArray(schema)) {
