@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sanitized generate-config-template fixture",
+  "type": "object",
+  "required": ["modelName", "modelType", "contactEmail", "replicas", "runtime", "containers"],
+  "properties": {
+    "modelName": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "modelType": {
+      "type": "string",
+      "enum": ["PythonModel", "JavaModel", "SparkApplication", "Triton"]
+    },
+    "contactEmail": {
+      "type": "string",
+      "format": "email"
+    },
+    "replicas": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string"
+        }
+      }
+    },
+    "containers": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}
