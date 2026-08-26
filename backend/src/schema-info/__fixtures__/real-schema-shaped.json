@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sanitized real-schema-shaped fixture",
+  "description": "Reproduces the structural patterns found in the real MEF config schema (discriminated array-of-objects union, required-property-discriminated union, patternProperties, description, item-level enum) without reproducing any of its actual content.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "pipelineParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "goals": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "enum": ["Sonar", "Deploy", "Test"] }
+        }
+      }
+    },
+    "applications": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "required": ["name", "deployStrategy", "image"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Application name"
+              },
+              "deployStrategy": { "enum": ["Create"] },
+              "image": { "type": "string" }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "required": ["name", "deployStrategy", "targetVersion"],
+            "properties": {
+              "name": { "type": "string" },
+              "deployStrategy": { "enum": ["Update"] },
+              "targetVersion": { "type": "string" }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "required": ["name", "deployStrategy"],
+            "properties": {
+              "name": { "type": "string" },
+              "deployStrategy": { "enum": ["Delete"] }
+            }
+          }
+        ]
+      }
+    },
+    "credentials": {
+      "type": "object",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "required": ["vaultSecretRef"],
+          "properties": {
+            "vaultSecretRef": {
+              "type": "object",
+              "properties": { "path": { "type": "string" } }
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": ["vaultADSecretRef"],
+          "properties": {
+            "vaultADSecretRef": {
+              "type": "object",
+              "properties": { "path": { "type": "string" } }
+            }
+          }
+        }
+      ]
+    },
+    "labels": {
+      "type": "object",
+      "patternProperties": {
+        "^[^\\s]*$": { "type": "string" }
+      }
+    }
+  }
+}

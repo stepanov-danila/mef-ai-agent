@@ -69,13 +69,18 @@ specific gaps found).
 
 - **Union field metadata (when the lookup path resolves exactly *to* the
   union node) reports every branch as a `variants` entry**, rather than
-  merging: `{ discriminator?: { property, value }, required: string[] }`
-  per branch. A discriminator is detected the same way
-  `fix-union-validation`'s `branchErrors.ts` does: a branch property
+  merging: `{ discriminator?: { property, value }, required: string[],
+  type?, constraints }` per branch. A discriminator is detected the same
+  way `fix-union-validation`'s `branchErrors.ts` does: a branch property
   with a single-value `enum`. This is different from the *merge* case
   above — merging answers "what can this field be", `variants` answers
   "what are the distinct shapes this object can take" for a field whose
-  own schema *is* the union.
+  own schema *is* the union. `type`/`constraints` per variant (not just
+  `discriminator`/`required`) matter for the real schema's *scalar-leaf*
+  unions too — e.g. `mls.pull.path`'s `oneOf` of two bare `$ref`
+  patterns, with no wrapping object and so no `properties` to discriminate
+  by at all — where a caller's real question is just "what patterns does
+  each variant accept".
 
 - **Constraint extraction: denylist of structural keywords, replacing
   the fixed allowlist.** The real schema uses 6 constraint-shaped
