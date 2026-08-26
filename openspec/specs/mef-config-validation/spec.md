@@ -37,20 +37,50 @@ the value is invalid.
 - **THEN** the system reports one error per violation, each naming its
   own field path, rather than stopping at the first violation found
 
-### Requirement: oneOf/anyOf validated against the first branch only
+### Requirement: Union schemas are validated with standard semantics
 Where the schema declares a field using `oneOf` or `anyOf`, the system
-SHALL validate the field's value against the first listed branch only,
-per the project's documented Phase 1 limitation.
+SHALL validate the field's value using standard JSON Schema semantics
+(matching any valid branch), not a restricted subset of branches.
 
-#### Scenario: Value matches the first branch
-- **WHEN** a field's value satisfies the first branch of its `oneOf` or
-  `anyOf` schema
-- **THEN** the system reports no error for that field, regardless of
-  whether the value would also match a later branch
-
-#### Scenario: Value only matches a later branch
+#### Scenario: Value matches a non-first branch
 - **WHEN** a field's value satisfies a `oneOf`/`anyOf` branch other than
-  the first one, but not the first branch itself
-- **THEN** the system reports an error for that field describing why it
-  fails the first branch, even though the value would be valid under a
-  later branch
+  the first one, and satisfies the union's matching rule (exactly one
+  branch for `oneOf`, at least one for `anyOf`)
+- **THEN** the system reports no error for that field
+
+#### Scenario: Value matches no branch
+- **WHEN** a field's value satisfies none of a `oneOf`/`anyOf` schema's
+  branches
+- **THEN** the system reports an error for that field
+
+### Requirement: Errors from a failed union are attributed to the intended variant
+When a config fails a `oneOf`/`anyOf` union, the system SHALL report
+only the errors of the single branch the config's own values indicate
+were intended, rather than every branch's errors concatenated.
+
+#### Scenario: Union has a value-discriminated branch
+- **WHEN** a config fails a union where one property's value (e.g. a
+  single-value `enum`) identifies which branch was intended, and the
+  config's value for that property identifies one branch
+- **THEN** the system reports only that branch's validation errors, and
+  does not report the other branches' errors or a generic
+  "did not match any branch" error
+
+#### Scenario: Union has no clear discriminator
+- **WHEN** a config fails a union where no single property value
+  identifies the intended branch
+- **THEN** the system reports the errors of whichever branch the config
+  comes closest to satisfying (fewest violations), rather than every
+  branch's errors concatenated
+
+### Requirement: A schema with non-standard keywords still compiles
+The system SHALL successfully compile and use a schema that contains
+keywords or constructs the validator does not specifically recognize,
+rather than failing to start validating at all.
+
+#### Scenario: Schema node uses an unrecognized keyword
+- **WHEN** the loaded schema contains a node with a keyword the
+  validator has no specific handling for
+- **THEN** the system still compiles the schema and validates configs
+  against it, treating the unrecognized keyword as a no-op rather than
+  raising a compilation error
