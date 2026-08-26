@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "^11.7.3",
+    "ajv": "^8.20.0",
+    "ajv-draft-04": "^1.0.0",
     "dotenv": "^16.4.5",
     "express": "^5.1.0"
   },
