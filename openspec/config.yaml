@@ -3,11 +3,42 @@ schema: spec-driven
 # Project context (optional)
 # This is shown to AI when creating artifacts.
 # Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Project: MEF AI Copilot — an AI assistant that helps ML engineers create,
+  validate, and understand configs for the MEF (ML Execution Framework)
+  deploy platform (mef-config.json), which has hundreds of fields with
+  strict formats and dependencies on Vault, OpenShift, Istio, etc.
+  Full spec: docs/PROJECT_SPEC.md (Russian).
+
+  Tech stack:
+    Backend: Node.js + TypeScript, Express REST API, GigaChat LLM
+      integration over corporate HTTPS with mTLS, JSON Schema Draft-04
+      parser with $ref resolution, agentic tool-execution loop.
+    Frontend: Vite + React + TypeScript, Monaco Editor for JSON/YAML,
+      chat UI, inline validation-error visualization in the editor.
+
+  Agent tools (Phase 1):
+    - validate_mef_config: validates a config against the JSON Schema
+    - get_schema_info: returns field metadata (type, required, pattern)
+    - generate_config_template: creates a minimal valid template
+
+  Architecture principles:
+    - No hardcoding — all field info is derived from the schema.
+    - Single source of truth — mef-config.json only.
+    - Agentic approach — the LLM picks tools, the backend executes them.
+    - Security first — secrets never reach logs; mask sensitive fields
+      (passwords, tokens, keySet); never ask the LLM for real secrets.
+    - Ready for change — schema updates must not require code rewrites.
+
+  Current constraints (Phase 1):
+    - JSON only, no YAML.
+    - oneOf/anyOf: only the first branch is handled.
+    - No cross-field (dependency) validation.
+    - Sessions are in-memory only (TTL 30 min), lost on server restart.
+    - Schema is assumed to stay Draft-04.
+
+  Conventions: Russian-language chat UX; rate limiting on the API;
+  in-memory schema caching.
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
