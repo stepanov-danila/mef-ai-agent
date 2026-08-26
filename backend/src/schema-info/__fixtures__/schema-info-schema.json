@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "modelName": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Name of the model, used to derive resource names"
+    },
+    "modelType": {
+      "type": "string",
+      "enum": ["PythonModel", "JavaModel"]
+    },
+    "replicas": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "notes": {
+      "type": "string"
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "oneOf": [
+            { "type": "string", "enum": ["python"] },
+            { "type": "string", "enum": ["java"] }
+          ]
+        }
+      },
+      "required": ["kind"]
+    }
+  },
+  "required": ["modelName", "modelType"]
+}
