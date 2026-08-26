@@ -9,6 +9,13 @@
     },
     "modelType": {
       "$ref": "#/definitions/modelType"
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string" }
+      },
+      "required": ["kind"]
     }
   },
   "required": ["modelName", "modelType"],
