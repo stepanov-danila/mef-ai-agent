@@ -37,4 +37,41 @@ describe("createApp", () => {
     const healthRes = await request(app).get("/health");
     expect(healthRes.status).toBe(200);
   });
+
+  it("honors an error's own status, falling back to 500 when unset", async () => {
+    const app = express();
+    app.get("/client-error", () => {
+      const err = Object.assign(new Error("bad input"), { status: 400 });
+      throw err;
+    });
+    app.get("/boom-sync", () => {
+      throw new Error("boom");
+    });
+    app.use(errorHandler);
+
+    const clientErrorRes = await request(app).get("/client-error");
+    expect(clientErrorRes.status).toBe(400);
+    expect(clientErrorRes.body).toEqual({ error: "bad input" });
+
+    const genericRes = await request(app).get("/boom-sync");
+    expect(genericRes.status).toBe(500);
+    expect(genericRes.body).toEqual({ error: "boom" });
+  });
+
+  it("wires up the agent tool routes (smoke test)", async () => {
+    const app = createApp();
+
+    const validateRes = await request(app)
+      .post("/tools/validate-mef-config")
+      .send({ modelName: "my-model", modelType: "PythonModel" });
+    expect(validateRes.status).not.toBe(404);
+
+    const fieldRes = await request(app).get(
+      "/tools/get-schema-info/field?pointer=/modelName",
+    );
+    expect(fieldRes.status).not.toBe(404);
+
+    const generateRes = await request(app).post("/tools/generate-config-template").send();
+    expect(generateRes.status).not.toBe(404);
+  });
 });

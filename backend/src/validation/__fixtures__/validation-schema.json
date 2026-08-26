@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "modelName": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "modelType": {
+      "enum": ["PythonModel", "JavaModel"]
+    },
+    "replicas": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "runtime": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": { "kind": { "enum": ["python"] } },
+          "required": ["kind"]
+        },
+        {
+          "type": "object",
+          "properties": { "kind": { "enum": ["java"] } },
+          "required": ["kind"]
+        }
+      ]
+    }
+  },
+  "required": ["modelName", "modelType"]
+}

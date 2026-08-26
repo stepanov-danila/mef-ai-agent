@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sanitized union fixture for generate-config-template",
+  "type": "object",
+  "required": ["deployment"],
+  "properties": {
+    "deployment": {
+      "type": "object",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "required": ["strategy", "image"],
+          "properties": {
+            "strategy": { "enum": ["Create"] },
+            "image": { "type": "string" }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": ["strategy", "targetVersion"],
+          "properties": {
+            "strategy": { "enum": ["Update"] },
+            "targetVersion": { "type": "string" }
+          }
+        }
+      ]
+    }
+  }
+}

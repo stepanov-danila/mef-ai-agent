@@ -32,7 +32,10 @@ context: |
 
   Current constraints (Phase 1):
     - JSON only, no YAML.
-    - oneOf/anyOf: only the first branch is handled.
+    - oneOf/anyOf are validated with standard JSON Schema semantics (any
+      matching branch is accepted); minProperties/maxProperties-style
+      implicit unions still validate correctly as plain constraints but
+      aren't recognized as unions for error-attribution purposes.
     - No cross-field (dependency) validation.
     - Sessions are in-memory only (TTL 30 min), lost on server restart.
     - Schema is assumed to stay Draft-04.
