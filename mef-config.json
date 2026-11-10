@@ -1,0 +1,4729 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "mef-config schema version:0.1",
+  "description": "JSON representation of mef-config",
+  "type": "object",
+  "required": ["pipelineParameters", "credentials", "secrets"],
+  "additionalProperties": false,
+  "properties": {
+    "sourceCodeProcessorParameters": {
+      "$ref": "#/definitions/sourceCodeProcessorParameters"
+    },
+    "deployerParameters": {
+      "$ref": "#/definitions/deployerParameters"
+    },
+    "pipelineParameters": {
+      "description": "общие параметры развертывания",
+      "type": "object",
+      "required": ["vaultNamespace"],
+      "additionalProperties": false,
+      "properties": {
+        "openShiftNamespace": {
+          "description": "OpenShift project name",
+          "$ref": "#/definitions/strValues/openShiftProjectName"
+        },
+        "openShiftNamespaceSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "vaultNamespace": {
+          "$ref": "#/definitions/strValues/vaultNamespace"
+        },
+        "projectCI": {
+          "$ref": "#/definitions/strValues/projectCI"
+        },
+        "goals": {
+          "description": "Цели запуска Pipeline",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "Sonar",
+              "OSS",
+              "SAST",
+              "BuildImages",
+              "Deploy",
+              "Test",
+              "R4C",
+              "GAC",
+              "Release",
+              "FastTrack",
+              "CSCheck"
+            ]
+          }
+        },
+        "debugMode": {
+          "description": "Режим отладки",
+          "type": "boolean"
+        },
+        "mailList": {
+          "description": "Список e-mail для обратной связи",
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "$ref": "#/definitions/strValues/email"
+          }
+        }
+      }
+    },
+    "credentials": {
+      "description": "список необходимых Jenkins Credential",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vaultCred"],
+      "properties": {
+        "vaultCred": {
+          "description": "Credential ID для доступа к SecMan",
+          "$ref": "#/definitions/strValues/notBlankText"
+        },
+        "infrastructureVaultCred": {
+          "description": "Credential ID для доступа к инфракструктурным секретам SecMan",
+          "$ref": "#/definitions/strValues/notBlankText"
+        }
+      }
+    },
+    "tests": {
+      "description": "Конфигурация для запуска автоматизированных тестов",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["annotations", "config", "selector"],
+        "properties": {
+          "annotations": {
+            "$ref": "#/definitions/autoTestsAnnotations"
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+              "remoteJenkinsJob": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["jenkinsAuthSecret", "url"],
+                "properties": {
+                  "jenkinsAuthSecret": {
+                    "description": "Jenkins auth secret ref",
+                    "$ref": "#/definitions/strValues/secretName"
+                  },
+                  "url": {
+                    "description": "Jenkins job URL",
+                    "$ref": "#/definitions/strValues/httpUrl"
+                  },
+                  "params": {
+                    "description": "Jenkins job parameters",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "patternProperties": {
+                      "^[a-zA-Z-_.]+$": {
+                        "$ref": "#/definitions/strValues/arbitraryText"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "$ref": "#/definitions/modelSelector"
+          }
+        }
+      }
+    },
+    "nexus": {
+      "description": "Releases configuration",
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/nexus/releaseConfig"
+      }
+    },
+    "modelManagementSystem": {
+      "description": "Model Management System configuration",
+      "$ref": "#/definitions/modelManagementSystemParameters"
+    },
+    "secrets": {
+      "description": "Secrets configurations",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/secretConfig"
+      }
+    },
+    "sources": {
+      "description": "Model sources",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/sourceConfig"
+      }
+    },
+    "applications": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "required": ["name", "components", "deployStrategy"],
+            "properties": {
+              "name": {
+                "$ref": "#/definitions/strValues/mefNamespaceName"
+              },
+              "annotations": {
+                "$ref": "#/definitions/appAnnotations"
+              },
+              "deployStrategy": {
+                "enum": ["Apply"]
+              },
+              "routes": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/definitions/routeConfig"
+                }
+              },
+              "recSysCaBundleSecret": {
+                "$ref": "#/definitions/strValues/secretName"
+              },
+              "recSysClientKeyPairSecret": {
+                "$ref": "#/definitions/strValues/secretName"
+              },
+              "components": {
+                "$ref": "#/definitions/applicationComponentsConfig"
+              },
+              "monitoring": {
+                "$ref": "#/definitions/monitoring"
+              }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "required": ["name", "components", "deployStrategy"],
+            "properties": {
+              "name": {
+                "$ref": "#/definitions/strValues/mefNamespaceName"
+              },
+              "annotations": {
+                "$ref": "#/definitions/appAnnotations"
+              },
+              "deployStrategy": {
+                "enum": ["Create"]
+              },
+              "routes": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/definitions/routeConfig"
+                }
+              },
+              "recSysCaBundleSecret": {
+                "$ref": "#/definitions/strValues/secretName"
+              },
+              "recSysClientKeyPairSecret": {
+                "$ref": "#/definitions/strValues/secretName"
+              },
+              "components": {
+                "$ref": "#/definitions/applicationComponentsConfig"
+              },
+              "monitoring": {
+                "$ref": "#/definitions/monitoring"
+              }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "required": ["name", "components", "deployStrategy"],
+            "properties": {
+              "name": {
+                "$ref": "#/definitions/strValues/mefNamespaceName"
+              },
+              "annotations": {
+                "$ref": "#/definitions/appAnnotations"
+              },
+              "deployStrategy": {
+                "enum": ["Replace"]
+              },
+              "routes": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/definitions/routeConfig"
+                }
+              },
+              "recSysCaBundleSecret": {
+                "$ref": "#/definitions/strValues/secretName"
+              },
+              "recSysClientKeyPairSecret": {
+                "$ref": "#/definitions/strValues/secretName"
+              },
+              "components": {
+                "$ref": "#/definitions/applicationComponentsConfig"
+              },
+              "monitoring": {
+                "$ref": "#/definitions/monitoring"
+              }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "required": ["name", "deployStrategy"],
+            "properties": {
+              "name": {
+                "$ref": "#/definitions/strValues/mefNamespaceName"
+              },
+              "annotations": {
+                "$ref": "#/definitions/appAnnotations"
+              },
+              "deployStrategy": {
+                "enum": ["None"]
+              },
+              "routes": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/definitions/routeConfig"
+                }
+              },
+              "recSysCaBundleSecret": {
+                "$ref": "#/definitions/strValues/secretName"
+              },
+              "recSysClientKeyPairSecret": {
+                "$ref": "#/definitions/strValues/secretName"
+              },
+              "components": {
+                "$ref": "#/definitions/applicationComponentsConfig"
+              },
+              "monitoring": {
+                "$ref": "#/definitions/monitoring"
+              }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "required": ["name", "deployStrategy"],
+            "properties": {
+              "name": {
+                "$ref": "#/definitions/strValues/mefNamespaceName"
+              },
+              "annotations": {
+                "$ref": "#/definitions/appAnnotations"
+              },
+              "deployStrategy": {
+                "enum": ["Delete"]
+              },
+              "routes": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/definitions/routeConfig"
+                }
+              },
+              "recSysCaBundleSecret": {
+                "$ref": "#/definitions/strValues/secretName"
+              },
+              "recSysClientKeyPairSecret": {
+                "$ref": "#/definitions/strValues/secretName"
+              },
+              "components": {
+                "$ref": "#/definitions/applicationComponentsConfig"
+              },
+              "monitoring": {
+                "$ref": "#/definitions/monitoring"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "messageFilterConfig": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["jsonSchemaConformation"],
+          "properties": {
+            "jsonSchemaConformation": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["schema"],
+              "properties": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "controllerKafkaMessageProcessingConfig": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "enum": ["Standard"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "enum": ["Batch"]
+            },
+            "conf": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "filtering": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "filters": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "$ref": "#/definitions/messageFilterConfig"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "clientSslConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caBundleSecret", "clientKeyPairSecret"],
+      "properties": {
+        "caBundleSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "clientKeyPairSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        }
+      }
+    },
+    "mlsConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ssl", "sessionTokenServiceAuthSecret"],
+      "properties": {
+        "ssl": {
+          "$ref": "#/definitions/clientSslConfig"
+        },
+        "sessionTokenServiceAuthSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "s3Client": {
+          "socketTimeout": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "resources": {
+          "$ref": "#/definitions/resources"
+        },
+        "autoscaling": {
+          "$ref": "#/definitions/autoscaling"
+        },
+        "istioProxy": {
+          "$ref": "#/definitions/istioProxy"
+        },
+        "vaultAgent": {
+          "$ref": "#/definitions/vaultAgent"
+        }
+      }
+    },
+    "cephConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["s3"],
+      "properties": {
+        "s3": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["endpoint", "authSecret", "ssl"],
+          "properties": {
+            "endpoint": {
+              "$ref": "#/definitions/strValues/httpUrl"
+            },
+            "authSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "ssl": {
+              "$ref": "#/definitions/clientSslConfig"
+            },
+            "socketTimeout": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "resources": {
+          "$ref": "#/definitions/resources"
+        },
+        "autoscaling": {
+          "$ref": "#/definitions/autoscaling"
+        },
+        "istioProxy": {
+          "$ref": "#/definitions/istioProxy"
+        },
+        "vaultAgent": {
+          "$ref": "#/definitions/vaultAgent"
+        }
+      }
+    },
+    "modelRoute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host"],
+      "properties": {
+        "host": {
+          "$ref": "#/definitions/strValues/hostname"
+        }
+      }
+    },
+    "prometheus": {
+      "description": "Конфигурация controller-prometheus",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "settings": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/vaultAgent"
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            },
+            "remoteWrite": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 10,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["url", "ssl"],
+                "properties": {
+                  "url": {
+                    "$ref": "#/definitions/strValues/httpUrl"
+                  },
+                  "queueConfig": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "capacity": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "maxShards": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "minShards": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "maxSamplesPerSend": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "batchSendDeadline": {
+                        "$ref": "#/definitions/strValues/prometheusConfigDuration"
+                      },
+                      "minBackoff": {
+                        "$ref": "#/definitions/strValues/prometheusConfigDuration"
+                      },
+                      "maxBackoff": {
+                        "$ref": "#/definitions/strValues/prometheusConfigDuration"
+                      },
+                      "sampleAgeLimit": {
+                        "$ref": "#/definitions/strValues/prometheusConfigDuration"
+                      }
+                    }
+                  },
+                  "ssl": {
+                    "$ref": "#/definitions/clientSslConfig"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "monitoring": {
+      "description": "Конфигурация monitoring",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enable": {
+          "description": "включение monitoring (по умолчанию false)",
+          "type": "boolean"
+        }
+      }
+    },
+    "applicationComponentsConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["controller"],
+      "properties": {
+        "models": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/model"
+          }
+        },
+        "tritonServers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/tritonServer"
+          }
+        },
+        "sparkApps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spark"
+          }
+        },
+        "kafkaStreamReaders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kafkaStreamReader"
+          }
+        },
+        "mlFlowModels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/mlFlowModel"
+          }
+        },
+        "profiler": {
+          "$ref": "#/definitions/profiler"
+        },
+        "ignite": {
+          "$ref": "#/definitions/ignite"
+        },
+        "controller": {
+          "type": "object",
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "required": ["logger"],
+              "properties": {
+                "prometheus": {
+                  "$ref": "#/definitions/prometheus"
+                },
+                "hadoop": {
+                  "$ref": "#/definitions/hadoop"
+                },
+                "kafka": {
+                  "$ref": "#/definitions/kafka"
+                },
+                "database": {
+                  "$ref": "#/definitions/database"
+                },
+                "logger": {
+                  "$ref": "#/definitions/logger"
+                },
+                "batchExecution": {
+                  "$ref": "#/definitions/batchExecution"
+                },
+                "storage": {
+                  "$ref": "#/definitions/storage"
+                },
+                "ingress": {
+                  "$ref": "#/definitions/istioIngress"
+                },
+                "mls": {
+                  "$ref": "#/definitions/mlsConfig"
+                },
+                "ceph": {
+                  "$ref": "#/definitions/cephConfig"
+                },
+                "egress": {
+                  "$ref": "#/definitions/istioEgress"
+                }
+              }
+            },
+            {
+              "additionalProperties": false,
+              "required": ["logger"],
+              "properties": {
+                "prometheus": {
+                  "$ref": "#/definitions/prometheus"
+                },
+                "hadoop": {
+                  "$ref": "#/definitions/hadoop"
+                },
+                "kafka": {
+                  "$ref": "#/definitions/kafka"
+                },
+                "database": {
+                  "$ref": "#/definitions/database"
+                },
+                "logger": {
+                  "$ref": "#/definitions/logger"
+                },
+                "batchExecution": {
+                  "$ref": "#/definitions/batchExecution"
+                },
+                "storage": {
+                  "$ref": "#/definitions/storage"
+                },
+                "proxy": {
+                  "$ref": "#/definitions/proxy"
+                },
+                "mls": {
+                  "$ref": "#/definitions/mlsConfig"
+                },
+                "ceph": {
+                  "$ref": "#/definitions/cephConfig"
+                },
+                "egress": {
+                  "$ref": "#/definitions/istioEgress"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "strValues": {
+      "arbitraryText": {
+        "type": "string",
+        "pattern": "^[^\\s]*$"
+      },
+      "notBlankText": {
+        "type": "string",
+        "pattern": "^[^\\s]+$"
+      },
+      "email": {
+        "type": "string",
+        "pattern": "^\\S+@\\S+\\.\\S+$"
+      },
+      "openShiftProjectName": {
+        "type": "string",
+        "pattern": "^([a-z0-9][-a-z0-9.]*)?[a-z0-9]$"
+      },
+      "vaultNamespace": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9]+[a-zA-Z0-9-_.]*[a-zA-Z0-9]+$"
+      },
+      "projectCI": {
+        "type": "string",
+        "pattern": "^(ci|CI)\\d+$"
+      },
+      "resourceName": {
+        "type": "string",
+        "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])*$"
+      },
+      "mefNamespaceName": {
+        "type": "string",
+        "pattern": "^[a-z](-?[a-z0-9]+)*$"
+      },
+      "relativePath": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_.]([a-zA-Z0-9_.-]*[a-zA-Z0-9_])?(/([a-zA-Z0-9_.]([a-zA-Z0-9_.-]*[a-zA-Z0-9_])?)?)*$"
+      },
+      "absPath": {
+        "type": "string",
+        "pattern": "^(/([a-zA-Z0-9_.]([a-zA-Z0-9_.-]*[a-zA-Z0-9_])?)?)*$"
+      },
+      "vaultPath": {
+        "type": "string",
+        "$ref": "#/definitions/strValues/relativePath"
+      },
+      "vaultADPath": {
+        "type": "string",
+        "pattern": "^/v1/CI\\d{8}_CI\\d{8}/([a-zA-Z0-9-_.]+/)*AD/(delta|sigma|omega)\\.sbrf\\.ru/creds/[a-z0-9\\-]*$"
+      },
+      "vaultADKeytabPath": {
+        "type": "string",
+        "pattern": "^CI\\d{8}_CI\\d{8}/([a-zA-Z0-9-_.]+/)*AD/(delta|sigma|omega)\\.sbrf\\.ru/keytab/[a-z0-9\\-]+$"
+      },
+      "vaultKey": {
+        "type": "string",
+        "pattern": "^[a-zA-Z]([a-zA-Z0-9-_.]*[a-zA-Z0-9])*$"
+      },
+      "sberCAFetchPath": {
+        "type": "string",
+        "pattern": "^CI\\d{8}_CI\\d{8}/([a-zA-Z0-9-_.]+/)*SBERCA/[a-zA-Z0-9-_.]+/fetch/[a-zA-Z0-9-_.]+$"
+      },
+      "sberCAPath": {
+        "type": "string",
+        "pattern": "^CI\\d{8}_CI\\d{8}/([a-zA-Z0-9-_.]+/)*SBERCA$"
+      },
+      "caName": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9-_.]+$"
+      },
+      "httpUrl": {
+        "type": "string",
+        "pattern": "^https?://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)$"
+      },
+      "mlsRepo": {
+        "type": "string",
+        "pattern": "^([0-9a-z]{3,63})$"
+      },
+      "mlsProjectId": {
+        "type": "string",
+        "pattern": "^([0-9a-zA-Z]{3,63})$"
+      },
+      "mlsModelId": {
+        "type": "string",
+        "pattern": "^([0-9a-zA-Z]{3,64})$"
+      },
+      "mlsVersion": {
+        "type": "string",
+        "pattern": "^(0|[1-9][0-9]?)\\.(0|[1-9][0-9]?)\\.(0|[1-9][0-9]?)(-[0-9a-zA-Z-]+(\\.[0-9a-zA-Z-]+)?)?(\\+[0-9a-zA-Z-]?(\\.[0-9a-zA-Z-]+)*)?$"
+      },
+      "gitUrl": {
+        "type": "string",
+        "pattern": "^(https|ssh)://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)$"
+      },
+      "urlNoProto": {
+        "type": "string",
+        "pattern": "^[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)$"
+      },
+      "routeConnectionTimeout": {
+        "type": "string",
+        "pattern": "^[0-9]+(us|ms|s|m|h|d)$"
+      },
+      "dockerImageUrl": {
+        "type": "string",
+        "$ref": "#/definitions/strValues/urlNoProto"
+      },
+      "secretName": {
+        "type": "string",
+        "pattern": "^[a-z]([a-z0-9-]*[a-z0-9])*$"
+      },
+      "javaClassName": {
+        "type": "string",
+        "pattern": "^([a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$][a-zA-Z\\d_$]*$"
+      },
+      "artifactGroupId": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9-_.]+$"
+      },
+      "hostname": {
+        "type": "string",
+        "pattern": "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$"
+      },
+      "socketAddress": {
+        "type": "string",
+        "pattern": "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])(:[0-9]*)?$"
+      },
+      "gitRef": {
+        "type": "string",
+        "$ref": "#/definitions/strValues/notBlankText"
+      },
+      "igniteCacheName": {
+        "type": "string",
+        "pattern": "^[a-zA-Z][A-Za-z0-9]*$"
+      },
+      "igniteUserName": {
+        "type": "string",
+        "pattern": "^[a-zA-Z]([A-Za-z0-9_]*[a-zA-Z0-9])*$"
+      },
+      "cron": {
+        "type": "string",
+        "pattern": "^(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\\d+(ns|us|µs|ms|s|m|h))+)|((((\\d+,)+\\d+|([\\d*]+([/\\-])\\d+)|\\d+|\\*) ?){5,7})$"
+      },
+      "databaseConnectionString": {
+        "type": "string",
+        "$ref": "#/definitions/strValues/notBlankText"
+      },
+      "kafkaTopicName": {
+        "type": "string",
+        "pattern": "^[a-zA-Z]([A-Za-z0-9-_.]*[a-zA-Z0-9])*$"
+      },
+      "kafkaConsumerGroupId": {
+        "type": "string",
+        "pattern": "^[a-zA-Z]([A-Za-z0-9-_.]*[a-zA-Z0-9])*$"
+      },
+      "proxyUserCn": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9._-]+$"
+      },
+      "recSysServerId": {
+        "type": "string",
+        "pattern": "^[a-z_]+$"
+      },
+      "sslServerName": {
+        "type": "string",
+        "$ref": "#/definitions/strValues/hostname"
+      },
+      "cpu": {
+        "type": "string",
+        "pattern": "^[0-9]+m?$"
+      },
+      "memory": {
+        "type": "string",
+        "pattern": "^[0-9]+(\\.)?[0-9]*(Ei|Pi|Ti|Gi|Mi|Ki)?$"
+      },
+      "ephemeralStorage": {
+        "type": "string",
+        "$ref": "#/definitions/strValues/memory"
+      },
+      "clusterName": {
+        "type": "string",
+        "pattern": "^[A-Z0-9]+([A-Z0-9_]*[A-Z0-9])*$"
+      },
+      "regInfoFileName": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9._-]+$"
+      },
+      "modelRouteName": {
+        "enum": [
+          "predict",
+          "health",
+          "info",
+          "reginfo",
+          "job_create",
+          "get_job_status"
+        ]
+      },
+      "routeBalance": {
+        "enum": ["roundrobin", "leastconn"]
+      },
+      "ingressLoadBalance": {
+        "enum": ["round_robin", "ewma"]
+      },
+      "upstreamGroupBasePath": {
+        "type": "string",
+        "pattern": "^/[a-z]([-a-z0-9]*[a-z0-9])*$"
+      },
+      "ipAddress": {
+        "type": "string",
+        "pattern": "^[0-9]+(\\.[0-9]+){3}$"
+      },
+      "prometheusConfigDuration": {
+        "type": "string",
+        "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$"
+      },
+      "globalRateLimitUnit": {
+        "type": "string",
+        "enum": ["second", "minute", "hour"]
+      },
+      "tritonModelHttpPath": {
+        "type": "string",
+        "pattern": "^/v2/models/[a-zA-Z0-9_.-]+(/versions/[0-9]+)?/(infer|config|stats)$"
+      },
+      "modelMethodHttpPath": {
+        "type": "string",
+        "pattern": "^/(predict|health|info|reginfo|job_create|get_job_status)$"
+      },
+      "rateLimitConfigId": {
+        "type": "string",
+        "pattern": "^[a-z]{3,10}$"
+      },
+      "controllerKafkaVersion": {
+        "enum": ["2.0.4", "2.0.7"]
+      }
+    },
+    "nexus": {
+      "nexus2": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["address", "authSecret"],
+        "properties": {
+          "address": {
+            "description": "Nexus address",
+            "$ref": "#/definitions/strValues/socketAddress"
+          },
+          "authSecret": {
+            "description": "Nexus secret",
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "repo": {
+            "description": "Repo name",
+            "$ref": "#/definitions/strValues/notBlankText"
+          }
+        }
+      },
+      "nexus3": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["address", "authSecret"],
+        "properties": {
+          "address": {
+            "description": "Nexus address",
+            "$ref": "#/definitions/strValues/socketAddress"
+          },
+          "authSecret": {
+            "description": "Nexus secret",
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "repo": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["group", "dev", "release"],
+            "properties": {
+              "group": {
+                "description": "Group repo name",
+                "$ref": "#/definitions/strValues/notBlankText"
+              },
+              "dev": {
+                "description": "Dev repo name",
+                "$ref": "#/definitions/strValues/notBlankText"
+              },
+              "release": {
+                "description": "Release repo name",
+                "$ref": "#/definitions/strValues/notBlankText"
+              }
+            }
+          }
+        }
+      },
+      "releaseConfig": {
+        "type": "object",
+        "required": ["jiraReleaseUrl", "artifactParams", "storage", "selector"],
+        "additionalProperties": false,
+        "properties": {
+          "jiraReleaseUrl": {
+            "description": "Jira release URL (no protocol). Used for release FPD registration",
+            "$ref": "#/definitions/strValues/httpUrl"
+          },
+          "annotations": {
+            "description": "Nexus release annotations",
+            "$ref": "#/definitions/nexusAnnotations"
+          },
+          "gacSecret": {
+            "description": "GaC secret",
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "gacProcessId": {
+            "description": "GaC process id secret",
+            "$ref": "#/definitions/strValues/notBlankText"
+          },
+          "artifactParams": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["groupId", "artifactId", "version"],
+            "properties": {
+              "groupId": {
+                "description": "Group",
+                "$ref": "#/definitions/strValues/artifactGroupId"
+              },
+              "artifactId": {
+                "description": "Release artifact name",
+                "$ref": "#/definitions/strValues/notBlankText"
+              },
+              "version": {
+                "description": "Release artifact version",
+                "$ref": "#/definitions/strValues/notBlankText"
+              }
+            }
+          },
+          "storage": {
+            "type": "object",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "required": ["type", "nexus2"],
+                "properties": {
+                  "type": {
+                    "enum": ["Nexus2"]
+                  },
+                  "nexus2": {
+                    "$ref": "#/definitions/nexus/nexus2"
+                  }
+                }
+              },
+              {
+                "additionalProperties": false,
+                "required": ["type", "nexus3"],
+                "properties": {
+                  "type": {
+                    "enum": ["Nexus3"]
+                  },
+                  "nexus3": {
+                    "$ref": "#/definitions/nexus/nexus3"
+                  }
+                }
+              }
+            ]
+          },
+          "selector": {
+            "$ref": "#/definitions/modelSelector"
+          }
+        }
+      }
+    },
+    "modelSelector": {
+      "description": "Model selector",
+      "type": "object",
+      "required": ["matchLabels"],
+      "additionalProperties": false,
+      "properties": {
+        "matchLabels": {
+          "$ref": "#/definitions/labels"
+        }
+      }
+    },
+    "modelManagementSystemParameters": {
+      "type": "object",
+      "required": ["keyPairSecret", "caBundleSecret", "ignoreErrors"],
+      "additionalProperties": false,
+      "properties": {
+        "keyPairSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "caBundleSecret": {
+          "description": "caBundle cert secret. Used as cacert for MMS ML requests",
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "ignoreErrors": {
+          "type": "boolean"
+        }
+      }
+    },
+    "routeConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host"],
+      "properties": {
+        "host": {
+          "description": "Route hostname",
+          "$ref": "#/definitions/strValues/hostname"
+        },
+        "balancing": {
+          "description": "Load balancing algorithm ('leastconn' or 'roundrobin')",
+          "enum": ["leastconn", "roundrobin"]
+        },
+        "connectionTimeout": {
+          "description": "Connection timeout. Time units: microseconds (us), milliseconds (ms), seconds (s), minutes (m), hours (h), or days (d)",
+          "$ref": "#/definitions/strValues/routeConnectionTimeout"
+        }
+      }
+    },
+    "deployerParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "vaultRole": {
+          "description": "Role for SecMan access",
+          "$ref": "#/definitions/strValues/notBlankText"
+        },
+        "mefPullSecret": {
+          "description": "MEF images pull secret",
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "defaultPullSecret": {
+          "description": "Default model images pull secret",
+          "$ref": "#/definitions/strValues/secretName"
+        }
+      }
+    },
+    "sourceCodeProcessorParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "defaultPullSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "defaultPushSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "defaultPipConfSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "defaultNetrcSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "defaultMvnSettingsSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "defaultGitSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "defaultSonarTokenSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "defaultNodeSelector": {
+          "$ref": "#/definitions/modelBuildNodeSelector"
+        }
+      }
+    },
+    "modelBuildNodeSelector": {
+      "description": "Label (один или множество) для сборочных контейнеров",
+      "type": "object",
+      "patternProperties": {
+        "^[^\\s]+$": {
+          "$ref": "#/definitions/strValues/notBlankText"
+        }
+      }
+    },
+    "mlsPullConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mlsUrl", "pull"],
+      "properties": {
+        "mlsUrl": {
+          "$ref": "#/definitions/strValues/httpUrl"
+        },
+        "pull": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "authSecret",
+              "repo",
+              "projectId",
+              "modelId",
+              "version",
+              "files"
+            ],
+            "properties": {
+              "workingDir": {
+                "$ref": "#/definitions/strValues/relativePath"
+              },
+              "authSecret": {
+                "$ref": "#/definitions/strValues/secretName"
+              },
+              "repo": {
+                "$ref": "#/definitions/strValues/mlsRepo"
+              },
+              "projectId": {
+                "$ref": "#/definitions/strValues/mlsProjectId"
+              },
+              "modelId": {
+                "$ref": "#/definitions/strValues/mlsModelId"
+              },
+              "version": {
+                "$ref": "#/definitions/strValues/mlsVersion"
+              },
+              "files": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["key"],
+                  "properties": {
+                    "key": {
+                      "$ref": "#/definitions/strValues/relativePath"
+                    },
+                    "path": {
+                      "$ref": "#/definitions/strValues/relativePath"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "mls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authSecret", "pull"],
+      "properties": {
+        "authSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "pull": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "url",
+            "repo",
+            "projectId",
+            "modelId",
+            "version",
+            "path",
+            "fileName"
+          ],
+          "properties": {
+            "url": {
+              "$ref": "#/definitions/strValues/httpUrl"
+            },
+            "repo": {
+              "$ref": "#/definitions/strValues/mlsRepo"
+            },
+            "projectId": {
+              "$ref": "#/definitions/strValues/mlsProjectId"
+            },
+            "modelId": {
+              "$ref": "#/definitions/strValues/mlsModelId"
+            },
+            "version": {
+              "$ref": "#/definitions/strValues/mlsVersion"
+            },
+            "path": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/strValues/absPath"
+                },
+                {
+                  "$ref": "#/definitions/strValues/relativePath"
+                }
+              ]
+            },
+            "fileName": {
+              "$ref": "#/definitions/strValues/relativePath"
+            }
+          }
+        },
+        "unzip": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "dest": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/strValues/absPath"
+                },
+                {
+                  "$ref": "#/definitions/strValues/relativePath"
+                }
+              ]
+            },
+            "removeSrc": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "buildArtifactStorageConfig": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "mlsConf"],
+          "properties": {
+            "type": {
+              "enum": ["MLS"]
+            },
+            "mlsConf": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "mlsUrl",
+                "modelParams",
+                "sessionTokenServiceAuthSecret"
+              ],
+              "properties": {
+                "mlsUrl": {
+                  "$ref": "#/definitions/strValues/httpUrl"
+                },
+                "modelParams": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["repo", "projectId", "modelId", "version"],
+                  "properties": {
+                    "repo": {
+                      "$ref": "#/definitions/strValues/mlsRepo"
+                    },
+                    "projectId": {
+                      "$ref": "#/definitions/strValues/mlsProjectId"
+                    },
+                    "modelId": {
+                      "$ref": "#/definitions/strValues/mlsModelId"
+                    },
+                    "version": {
+                      "$ref": "#/definitions/strValues/mlsVersion"
+                    }
+                  }
+                },
+                "sessionTokenServiceAuthSecret": {
+                  "$ref": "#/definitions/strValues/secretName"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "build": {
+      "description": "Описание сборки",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["serviceType", "image", "baseImage"],
+          "additionalProperties": false,
+          "properties": {
+            "serviceType": {
+              "enum": ["PythonModel"]
+            },
+            "pullSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "pushSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "baseImage": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "image": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "resources": {
+              "$ref": "#/definitions/buildResources"
+            },
+            "timeout": {
+              "$ref": "#/definitions/buildTimeout"
+            },
+            "appFile": {
+              "$ref": "#/definitions/strValues/relativePath"
+            },
+            "appScript": {
+              "$ref": "#/definitions/strValues/relativePath"
+            },
+            "netrcSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "pipConfSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "nodeSelector": {
+              "$ref": "#/definitions/modelBuildNodeSelector"
+            },
+            "mls": {
+              "$ref": "#/definitions/mls"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "serviceType",
+            "image",
+            "baseImage",
+            "sparkAppBuilderImage"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "serviceType": {
+              "enum": ["PythonSparkApplication"]
+            },
+            "pullSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "pushSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "baseImage": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "image": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "sparkAppBuilderImagePullSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "sparkAppBuilderImage": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "resources": {
+              "$ref": "#/definitions/buildResources"
+            },
+            "timeout": {
+              "$ref": "#/definitions/buildTimeout"
+            },
+            "appFile": {
+              "$ref": "#/definitions/strValues/relativePath"
+            },
+            "netrcSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "pipConfSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "nodeSelector": {
+              "$ref": "#/definitions/modelBuildNodeSelector"
+            },
+            "mls": {
+              "$ref": "#/definitions/mls"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["serviceType", "image", "baseImage", "artifactStorage"],
+          "additionalProperties": false,
+          "properties": {
+            "serviceType": {
+              "enum": ["MLflowModel"]
+            },
+            "pullSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "pushSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "baseImage": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "image": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "timeout": {
+              "$ref": "#/definitions/buildTimeout"
+            },
+            "netrcSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "pipConfSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "artifactStorage": {
+              "$ref": "#/definitions/buildArtifactStorageConfig"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["serviceType", "image", "baseImage"],
+          "additionalProperties": false,
+          "properties": {
+            "serviceType": {
+              "enum": ["JavaModel"]
+            },
+            "pullSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "pushSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "baseImage": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "image": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "resources": {
+              "$ref": "#/definitions/buildResources"
+            },
+            "timeout": {
+              "$ref": "#/definitions/buildTimeout"
+            },
+            "mvnModule": {
+              "$ref": "#/definitions/strValues/relativePath"
+            },
+            "mvnSettingsSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "nodeSelector": {
+              "$ref": "#/definitions/modelBuildNodeSelector"
+            },
+            "mls": {
+              "$ref": "#/definitions/mls"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["serviceType", "image", "baseImage"],
+          "additionalProperties": false,
+          "properties": {
+            "serviceType": {
+              "enum": ["BasicTriton"]
+            },
+            "pullSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "pushSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "baseImage": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "image": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "resources": {
+              "$ref": "#/definitions/buildResources"
+            },
+            "timeout": {
+              "$ref": "#/definitions/buildTimeout"
+            },
+            "nodeSelector": {
+              "$ref": "#/definitions/modelBuildNodeSelector"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["serviceType", "image", "baseImage"],
+          "additionalProperties": false,
+          "properties": {
+            "serviceType": {
+              "enum": ["Triton"]
+            },
+            "pullSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "pushSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "baseImage": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "image": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "resources": {
+              "$ref": "#/definitions/buildResources"
+            },
+            "timeout": {
+              "$ref": "#/definitions/buildTimeout"
+            },
+            "nodeSelector": {
+              "$ref": "#/definitions/modelBuildNodeSelector"
+            },
+            "mls": {
+              "$ref": "#/definitions/mlsPullConfig"
+            }
+          }
+        }
+      ]
+    },
+    "sourceConfig": {
+      "type": "object",
+      "required": ["name", "build"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/strValues/mefNamespaceName"
+        },
+        "releaseNotes": {
+          "$ref": "#/definitions/releaseNotes"
+        },
+        "sonar": {
+          "$ref": "#/definitions/sonar"
+        },
+        "gitSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "git": {
+          "$ref": "#/definitions/gitConfig"
+        },
+        "gitCloneBehaviour": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "timeout": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "contextDir": {
+          "$ref": "#/definitions/strValues/relativePath"
+        },
+        "buildStrategy": {
+          "enum": ["Jenkins", "None"]
+        },
+        "groupId": {
+          "$ref": "#/definitions/strValues/notBlankText"
+        },
+        "build": {
+          "$ref": "#/definitions/build"
+        }
+      }
+    },
+    "secretConfig": {
+      "type": "object",
+      "required": ["name", "valueType", "valueFrom"],
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["Keytab"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultSecretRef"],
+                  "properties": {
+                    "vaultSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultPath"
+                        },
+                        "keySet": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["keytab"],
+                          "properties": {
+                            "keytab": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultADSecretRef"],
+                  "properties": {
+                    "vaultADSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultADKeytabPath"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["BasicAuth"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultSecretRef"],
+                  "properties": {
+                    "vaultSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultPath"
+                        },
+                        "keySet": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["username", "password"],
+                          "properties": {
+                            "username": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            },
+                            "password": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultADSecretRef"],
+                  "properties": {
+                    "vaultADSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultADPath"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultADWithDomainSecretRef"],
+                  "properties": {
+                    "vaultADWithDomainSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultADPath"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["SshAuth"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultSecretRef"],
+                  "properties": {
+                    "vaultSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultPath"
+                        },
+                        "keySet": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["username", "passphrase", "privateKey"],
+                          "properties": {
+                            "username": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            },
+                            "privateKey": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            },
+                            "passphrase": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["KeyPair"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultSecretRef"],
+                  "properties": {
+                    "vaultSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultPath"
+                        },
+                        "keySet": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["crt", "key", "keyPassword"],
+                          "properties": {
+                            "crt": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            },
+                            "key": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            },
+                            "keyPassword": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["CaBundle"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultSecretRef"],
+                  "properties": {
+                    "vaultSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultPath"
+                        },
+                        "keySet": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["caBundle"],
+                          "properties": {
+                            "caBundle": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["Token"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultSecretRef"],
+                  "properties": {
+                    "vaultSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultPath"
+                        },
+                        "keySet": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["token"],
+                          "properties": {
+                            "token": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["Text"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultSecretRef"],
+                  "properties": {
+                    "vaultSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultPath"
+                        },
+                        "keySet": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["text"],
+                          "properties": {
+                            "text": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["S3Credentials"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultSecretRef"],
+                  "properties": {
+                    "vaultSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultPath"
+                        },
+                        "keySet": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["accessKey", "secretKey"],
+                          "properties": {
+                            "accessKey": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            },
+                            "secretKey": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["JKS"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultSecretRef"],
+                  "properties": {
+                    "vaultSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultPath"
+                        },
+                        "keySet": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "jks",
+                            "password",
+                            "keyPassword",
+                            "keyAlias"
+                          ],
+                          "properties": {
+                            "jks": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            },
+                            "password": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            },
+                            "keyPassword": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            },
+                            "keyAlias": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["PKCS12"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["vaultSecretRef"],
+                  "properties": {
+                    "vaultSecretRef": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/vaultPath"
+                        },
+                        "keySet": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["p12", "password", "keyAlias"],
+                          "properties": {
+                            "p12": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            },
+                            "password": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            },
+                            "keyAlias": {
+                              "$ref": "#/definitions/strValues/vaultKey"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["SberCAProvidedKeyPair"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["sberCARole"],
+                  "properties": {
+                    "sberCARole": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path", "requestParams"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/sberCAFetchPath"
+                        },
+                        "requestParams": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["cn", "ttl"],
+                          "properties": {
+                            "cn": {
+                              "$ref": "#/definitions/strValues/proxyUserCn"
+                            },
+                            "altNames": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/definitions/strValues/proxyUserCn"
+                              }
+                            },
+                            "ttl": {
+                              "type": "integer",
+                              "minimum": 1
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "valueType": {
+              "enum": ["SberCAProvidedCABundle"]
+            },
+            "valueFrom": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["sberCA"],
+                  "properties": {
+                    "sberCA": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path", "caName"],
+                      "properties": {
+                        "path": {
+                          "$ref": "#/definitions/strValues/sberCAPath"
+                        },
+                        "caName": {
+                          "$ref": "#/definitions/strValues/caName"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "labels": {
+      "description": "Метки",
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[^\\s]*$": {
+          "$ref": "#/definitions/strValues/notBlankText"
+        }
+      }
+    },
+    "nodeSelector": {
+      "description": "nodeSelector",
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[^\\s]*$": {
+          "$ref": "#/definitions/strValues/notBlankText"
+        }
+      }
+    },
+    "autoTestsAnnotations": {
+      "description": "Auto tests annotations",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "qualityGates.types": {
+          "type": "array",
+          "description": "Quality Gate types",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["Smoke", "Regress"]
+          }
+        },
+        "enabled": {
+          "description": "Enable auto test",
+          "type": "boolean"
+        }
+      }
+    },
+    "modelAnnotations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "metadata.readyForCloud": {
+          "description": "Ready for Cloud flag",
+          "type": "boolean"
+        },
+        "metadata.regInfo": {
+          "description": "Source config for retrieving data for /reginfo endpoint",
+          "type": "object",
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "required": ["value"],
+              "properties": {
+                "value": {
+                  "type": "object"
+                }
+              }
+            },
+            {
+              "additionalProperties": false,
+              "required": ["valueFrom"],
+              "properties": {
+                "valueFrom": {
+                  "type": "object",
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "required": ["src"],
+                      "properties": {
+                        "src": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "searchFor": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "$ref": "#/definitions/strValues/regInfoFileName"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "release.path": {
+          "description": "Name of the directory inside release artifact",
+          "$ref": "#/definitions/strValues/resourceName"
+        },
+        "release.previousRelease.nexusUrl": {
+          "description": "Release artifact, that contains previous version of the current model service",
+          "$ref": "#/definitions/strValues/httpUrl"
+        },
+        "release.previousRelease.path": {
+          "description": "Name of the directory inside release artifact",
+          "$ref": "#/definitions/strValues/resourceName"
+        },
+        "release.mls.projectId": {
+          "$ref": "#/definitions/strValues/mlsProjectId"
+        },
+        "release.mls.modelId": {
+          "$ref": "#/definitions/strValues/mlsModelId"
+        },
+        "release.mls.version": {
+          "$ref": "#/definitions/strValues/mlsVersion"
+        },
+        "modelManagement.id": {
+          "description": "Model id from Model Management System",
+          "$ref": "#/definitions/strValues/notBlankText"
+        },
+        "modelManagement.versionId": {
+          "description": "Model version id from Model Management System",
+          "$ref": "#/definitions/strValues/notBlankText"
+        },
+        "modelManagement.productionVersionId": {
+          "description": "Model production version id from Model Management System",
+          "$ref": "#/definitions/strValues/notBlankText"
+        },
+        "upstreamGroup.groupId": {
+          "$ref": "#/definitions/strValues/resourceName"
+        },
+        "upstreamGroup.weight": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rateLimits.configId": {
+          "$ref": "#/definitions/strValues/rateLimitConfigId"
+        }
+      }
+    },
+    "nexusAnnotations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "modelManagement.implementationId": {
+          "description": "Model implementation id from Model Management System",
+          "$ref": "#/definitions/strValues/notBlankText"
+        }
+      }
+    },
+    "appAnnotations": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^modelUpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.useAppLevelRoutes$": {
+          "type": "boolean"
+        },
+        "^modelUpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.basePath$": {
+          "$ref": "#/definitions/strValues/upstreamGroupBasePath"
+        },
+        "^(model|tritonServer)UpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.(route|sharedRoute|ingress|sharedIngress)\\.enabled$": {
+          "type": "boolean"
+        },
+        "^(model|tritonServer)UpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.(route|sharedRoute|ingress|sharedIngress)\\.host$": {
+          "$ref": "#/definitions/strValues/hostname"
+        },
+        "^(model|tritonServer)UpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.(route|sharedRoute)\\.balance$": {
+          "$ref": "#/definitions/strValues/routeBalance"
+        },
+        "^(model|tritonServer)UpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.(route|sharedRoute)\\.timeout$": {
+          "$ref": "#/definitions/strValues/routeConnectionTimeout"
+        },
+        "^(model|tritonServer)UpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.(ingress|sharedIngress)\\.proxy-connect-timeout$": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "^(model|tritonServer)UpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.(ingress|sharedIngress)\\.proxy-send-timeout$": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "^(model|tritonServer)UpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.(ingress|sharedIngress)\\.proxy-read-timeout$": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "^(model|tritonServer)UpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.(ingress|sharedIngress)\\.load-balance$": {
+          "$ref": "#/definitions/strValues/ingressLoadBalance"
+        },
+        "^(model|tritonServer)UpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.rateLimiterConfigId$": {
+          "$ref": "#/definitions/strValues/rateLimitConfigId"
+        },
+        "^modelUpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.rateLimits$": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/modelRateLimitConfig"
+          }
+        },
+        "^tritonServerUpstreamGroups\\.[a-z]([-a-z0-9]*[a-z0-9])*\\.rateLimits$": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/tritonServerRateLimitConfig"
+          }
+        },
+        "^rateLimiter\\.connection\\.enabled$": {
+          "type": "boolean"
+        },
+        "^rateLimiter\\.allowGeneratingConfigIdentifiers$": {
+          "type": "boolean"
+        },
+        "^rateLimiter\\.service\\.namespace$": {
+          "$ref": "#/definitions/strValues/openShiftProjectName"
+        },
+        "^rateLimiter\\.service\\.name$": {
+          "$ref": "#/definitions/strValues/resourceName"
+        },
+        "^rateLimiter\\.service\\.port$": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "^rateLimiter\\.service\\.connectTimeout$": {
+          "$ref": "#/definitions/strValues/prometheusConfigDuration"
+        },
+        "^rateLimiter\\.service\\.readTimeout$": {
+          "$ref": "#/definitions/strValues/prometheusConfigDuration"
+        }
+      }
+    },
+    "socket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "port"],
+      "properties": {
+        "host": {
+          "$ref": "#/definitions/strValues/hostname"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "sonar": {
+      "description": "Конфигурация для Sonar",
+      "type": "object",
+      "required": ["key"],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "$ref": "#/definitions/strValues/notBlankText"
+        },
+        "sonarTokenSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        }
+      }
+    },
+    "gitConfig": {
+      "type": "object",
+      "required": ["url"],
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "description": "Git repo URL",
+          "$ref": "#/definitions/strValues/gitUrl"
+        },
+        "branch": {
+          "description": "Git ref",
+          "$ref": "#/definitions/strValues/gitRef"
+        }
+      }
+    },
+    "releaseNotes": {
+      "description": "Настройки для формирования ReleaseNotes",
+      "type": "object",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "description": "Git ref (hash/tag/branch/HEAD etc.)",
+          "$ref": "#/definitions/strValues/gitRef"
+        },
+        "to": {
+          "description": "Git ref (hash/tag/branch/HEAD etc.)",
+          "$ref": "#/definitions/strValues/gitRef"
+        }
+      }
+    },
+    "buildTimeout": {
+      "description": "Настройки таймаута",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 7200
+    },
+    "igniteUser": {
+      "description": "Настройки пользователя Ignite",
+      "type": "object",
+      "required": ["name", "caches", "caBundleSecret", "clientKeyPairSecret"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/strValues/igniteUserName"
+        },
+        "caches": {
+          "description": "Список доступных кэшей",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/strValues/igniteCacheName"
+          }
+        },
+        "caBundleSecret": {
+          "description": "Ссылка на секрет, содержащий сертификаты доверенных УЦ",
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "clientKeyPairSecret": {
+          "description": "Ссылка на секрет, содержащий клиентские сертификаты, используемые для работы с кластером Ignite",
+          "$ref": "#/definitions/strValues/secretName"
+        }
+      }
+    },
+    "igniteCacheConfig": {
+      "description": "Настройки кэша Ignite",
+      "type": "object",
+      "required": ["name", "initialSize"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "Имя",
+          "$ref": "#/definitions/strValues/igniteCacheName"
+        },
+        "maxSize": {
+          "description": "Максимальный объем памяти для кэша (в байтах)",
+          "type": "integer",
+          "minimum": 10485760
+        },
+        "initialSize": {
+          "description": "Начальный объем памяти для кэша (в байтах)",
+          "type": "integer",
+          "minimum": 10485760
+        },
+        "pageEvictionMode": {
+          "description": "Стратегия очистки кэша при переполнении",
+          "enum": ["RANDOM_LRU", "RANDOM_2_LRU"]
+        }
+      }
+    },
+    "ignite": {
+      "description": "Настройки кластера Ignite",
+      "type": "object",
+      "required": ["users", "settings"],
+      "additionalProperties": false,
+      "properties": {
+        "users": {
+          "description": "Настройки пользователей Ignite",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/igniteUser"
+          }
+        },
+        "settings": {
+          "type": "object",
+          "required": ["caches", "nodes"],
+          "additionalProperties": false,
+          "properties": {
+            "replicationFactor": {
+              "description": "Фактор репликации (соответствует количеству копий данных)",
+              "type": "integer",
+              "minimum": 1
+            },
+            "caches": {
+              "description": "Настройки кэшей Ignite",
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/igniteCacheConfig"
+              }
+            },
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/vaultAgent"
+            },
+            "nodes": {
+              "description": "Настройки для узлов кластера Ignite",
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["caBundleSecret", "clusterNodeKeyPairSecret"],
+              "properties": {
+                "caBundleSecret": {
+                  "description": "Ссылка на секрет, содержащий сертификаты доверенных УЦ",
+                  "$ref": "#/definitions/strValues/secretName"
+                },
+                "clusterNodeKeyPairSecret": {
+                  "description": "Ссылка на секрет, содержащий клиентские сертификаты узла кластера Ignite",
+                  "$ref": "#/definitions/strValues/secretName"
+                },
+                "count": {
+                  "description": "Количество узлов, которые требуется развернуть",
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "resources": {
+                  "description": "Ресурсы, предоставляемые каждому узлу кластера Ignite",
+                  "$ref": "#/definitions/resources"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "spark": {
+      "description": "Настройки кластера Spark",
+      "type": "object",
+      "required": ["name", "driver"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/strValues/resourceName"
+        },
+        "driver": {
+          "description": "Конфигурация spark driver",
+          "type": "object",
+          "required": ["image"],
+          "additionalProperties": false,
+          "properties": {
+            "annotations": {
+              "$ref": "#/definitions/modelAnnotations"
+            },
+            "labels": {
+              "$ref": "#/definitions/labels"
+            },
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "runner": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "required": ["type", "schedulerConf"],
+                  "properties": {
+                    "type": {
+                      "enum": ["Scheduler"]
+                    },
+                    "schedulerConf": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["schedule"],
+                      "properties": {
+                        "schedule": {
+                          "description": "Schedule in cron format (* * * * *)",
+                          "$ref": "#/definitions/strValues/cron"
+                        },
+                        "activeDeadlineSeconds": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 2147483647
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "additionalProperties": false,
+                  "required": ["type"],
+                  "properties": {
+                    "type": {
+                      "enum": ["WebAppRunner"]
+                    },
+                    "webAppRunnerConf": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "autoscaling": {
+                          "$ref": "#/definitions/autoscaling"
+                        },
+                        "readinessProbe": {
+                          "$ref": "#/definitions/readinessProbe"
+                        },
+                        "livenessProbe": {
+                          "$ref": "#/definitions/livenessProbe"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "image": {
+              "$ref": "#/definitions/strValues/dockerImageUrl"
+            },
+            "pullSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            },
+            "httpServer": {
+              "description": "Настройки HTTP-сервера модели",
+              "$ref": "#/definitions/httpServerSettings"
+            },
+            "grpcServer": {
+              "description": "Настройки gRPC-сервера модели",
+              "$ref": "#/definitions/grpcServerSettings"
+            },
+            "language": {
+              "$ref": "#/definitions/language"
+            }
+          }
+        },
+        "cluster": {
+          "description": "Конфигурация",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "master": {
+              "description": "Конфигурация мастер pod spark",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "highAvailabilityAndRecovery": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "minProperties": 1,
+                  "maxProperties": 1,
+                  "properties": {
+                    "ha": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "uiBackendId": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "replicas": {
+                          "type": "integer",
+                          "minimum": 2
+                        },
+                        "zooKeeper": {
+                          "$ref": "#/definitions/sparkZooKeeperConf"
+                        }
+                      }
+                    },
+                    "recovery": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "zooKeeper": {
+                          "$ref": "#/definitions/sparkZooKeeperConf"
+                        }
+                      }
+                    }
+                  }
+                },
+                "istioProxy": {
+                  "$ref": "#/definitions/istioProxy"
+                },
+                "resources": {
+                  "$ref": "#/definitions/resources"
+                }
+              }
+            },
+            "worker": {
+              "description": "Конфигурация worker pod spark",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "istioProxy": {
+                  "$ref": "#/definitions/istioProxy"
+                },
+                "resources": {
+                  "$ref": "#/definitions/resources"
+                },
+                "autoscaling": {
+                  "$ref": "#/definitions/autoscaling"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sparkZooKeeperConf": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "replicas": {
+          "type": "integer",
+          "minimum": 3,
+          "not": {
+            "multipleOf": 2
+          }
+        },
+        "istioProxy": {
+          "$ref": "#/definitions/istioProxy"
+        },
+        "resources": {
+          "$ref": "#/definitions/resources"
+        }
+      }
+    },
+    "language": {
+      "enum": ["Java", "Python"]
+    },
+    "addressDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sockets"],
+      "properties": {
+        "sockets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/socket"
+          }
+        },
+        "addressFormat": {
+          "$ref": "#/definitions/strValues/notBlankText"
+        }
+      }
+    },
+    "database": {
+      "description": "Конфигурация controller-database",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "settings", "queriesConfSecret"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "$ref": "#/definitions/strValues/resourceName",
+            "description": "Имя сервиса controller-database в OpenShift"
+          },
+          "queriesConfSecret": {
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "caBundleSecret": {
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "clientKeyPairSecret": {
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "definitions": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "databaseAddress": {
+                "$ref": "#/definitions/addressDefinition"
+              }
+            }
+          },
+          "settings": {
+            "description": "Конфигурация",
+            "type": "object",
+            "required": [
+              "security",
+              "databaseUrl",
+              "databaseName",
+              "databaseVersion"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "hostAliases": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ip", "hostnames"],
+                  "properties": {
+                    "ip": {
+                      "$ref": "#/definitions/strValues/ipAddress"
+                    },
+                    "hostnames": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "$ref": "#/definitions/strValues/hostname"
+                      }
+                    }
+                  }
+                }
+              },
+              "grpcServer": {
+                "type": "object",
+                "description": "Настройки GRPC-сервера в составе контроллера",
+                "additionalProperties": false,
+                "properties": {
+                  "maxInboundMessageSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Максимальный размер тела сообщения (в байтах)"
+                  },
+                  "maxInboundMetadataSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Максимальный размер заголовка (в байтах)"
+                  }
+                }
+              },
+              "security": {
+                "type": "object",
+                "required": ["auth"],
+                "additionalProperties": false,
+                "properties": {
+                  "auth": {
+                    "type": "object",
+                    "oneOf": [
+                      {
+                        "additionalProperties": false,
+                        "required": ["type", "basicAuthParams"],
+                        "properties": {
+                          "type": {
+                            "enum": ["BASIC"]
+                          },
+                          "basicAuthParams": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["authSecret"],
+                            "properties": {
+                              "authSecret": {
+                                "$ref": "#/definitions/strValues/secretName"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "additionalProperties": false,
+                        "required": ["type", "kerberosAuthParams"],
+                        "properties": {
+                          "type": {
+                            "enum": ["KERBEROS"]
+                          },
+                          "kerberosAuthParams": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "krb5ConfSecret",
+                              "principalSecret",
+                              "keytabSecret"
+                            ],
+                            "properties": {
+                              "krb5ConfSecret": {
+                                "$ref": "#/definitions/strValues/secretName"
+                              },
+                              "principalSecret": {
+                                "$ref": "#/definitions/strValues/secretName"
+                              },
+                              "keytabSecret": {
+                                "$ref": "#/definitions/strValues/secretName"
+                              },
+                              "databaseUsernameSecret": {
+                                "$ref": "#/definitions/strValues/secretName"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "protocol": {
+                    "enum": ["TLS", "PLAINTEXT"]
+                  }
+                }
+              },
+              "databaseTransactionIsolationLevel": {
+                "enum": [
+                  "TRANSACTION_READ_UNCOMMITTED",
+                  "TRANSACTION_READ_COMMITTED",
+                  "TRANSACTION_REPEATABLE_READ",
+                  "TRANSACTION_SERIALIZABLE"
+                ]
+              },
+              "databaseUrl": {
+                "description": "jdbc connection string для текущей базы данных",
+                "$ref": "#/definitions/strValues/databaseConnectionString"
+              },
+              "databaseHosts": {
+                "description": "Имена хостов, на которых запущена СУБД",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/definitions/strValues/hostname"
+                }
+              },
+              "databaseName": {
+                "description": "Название СУБД",
+                "enum": [
+                  "clickhouse",
+                  "h2",
+                  "hana",
+                  "hive",
+                  "ignite",
+                  "mssql",
+                  "oracle",
+                  "postgresql"
+                ]
+              },
+              "databaseVersion": {
+                "description": "Версия драйвера СУБД",
+                "$ref": "#/definitions/strValues/notBlankText"
+              },
+              "databaseEncoding": {
+                "description": "Кодировка СУБД",
+                "$ref": "#/definitions/strValues/notBlankText"
+              },
+              "databaseAutoCommit": {
+                "description": "Включает поведение автоматической фиксации транзакций. Значение умолчанию: true",
+                "type": "boolean"
+              },
+              "databaseMaximumPoolSize": {
+                "description": "Значение определяет максимальное количество  подключений контроллера к базе данных (включая как незанятые, так и используемые соединения). Когда пул достигает этого размера и неактивные соединения будут недоступны, новые запросы будут блокироваться на время databaseConnectionTimeout миллисекунд до истечения времени ожидания. Значение по умолчанию: 10 соединений",
+                "type": "integer"
+              },
+              "databaseMinimumIdle": {
+                "description": "Значение контролирует минимальное количество незанятых соединений, которое контроллер пытается поддерживать в пуле. Если количество незанятых подключений опускается ниже этого значения, а общее количество подключений в пуле меньше databaseMaximumPoolSize, контроллер приложит все усилия для быстрого и эффективного добавления дополнительных подключений. Значение по умолчанию: 10 соединений\n",
+                "type": "integer"
+              },
+              "databaseIdleTimeout": {
+                "description": "Значение управляет максимальным временем простоя соединения в пуле. Этот параметр применяется только в том случае, если databaseMinimumIdle задано значение меньше databaseMaximumPoolSize. Неактивные соединения не будут отключены, когда пул достигнет databaseMinimumIdle соединений. Соединение никогда не будет отключено как неактивное до истечения этого тайм-аута. Значение 0 означает, что неактивные соединения никогда не удаляются из пула. Минимально допустимое значение - 10000 мс (10 секунд). Значение по умолчанию: 60000 (1 минута)",
+                "type": "integer"
+              },
+              "databaseConnectionTimeout": {
+                "description": "Значение контролирует максимальное количество миллисекунд, в течение которого контроллер будет ожидать подключения из пула соединений с базой данных. Если это время будет превышено, но соединение не станет доступным, будет сгенерировано исключение SQLException. Наименьшее допустимое время ожидания соединения составляет 250 мс. Значение по умолчанию: 10000 (10 секунд)",
+                "type": "integer"
+              },
+              "databaseMaxLifeTime": {
+                "description": "Значение контролирует максимальное время жизни соединения в пуле. Используемое соединение никогда не будет удалено, только когда оно будет закрыто, оно будет удалено. Значение должно быть на несколько секунд короче, чем ограничение времени подключения любой базы данных или инфраструктуры. Значение 0 указывает на бесконечное время жизни. Минимально допустимое значение - 30000 мс (30 секунд). Значение по умолчанию: 1800000 (30 минут)",
+                "type": "integer"
+              },
+              "istioProxy": {
+                "$ref": "#/definitions/istioProxy"
+              },
+              "vaultAgent": {
+                "$ref": "#/definitions/vaultAgent"
+              },
+              "resources": {
+                "$ref": "#/definitions/resources"
+              },
+              "autoscaling": {
+                "$ref": "#/definitions/autoscaling"
+              }
+            }
+          }
+        }
+      }
+    },
+    "batchExecution": {
+      "description": "Конфигурация batch execution",
+      "type": "object",
+      "required": ["databaseBasicAuthSecret", "modelConfSecret", "settings"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "enum": ["v1", "v2"]
+        },
+        "databaseBasicAuthSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "modelConfSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "definitions": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "databaseAddress": {
+              "$ref": "#/definitions/addressDefinition"
+            }
+          }
+        },
+        "settings": {
+          "description": "Конфигурация",
+          "type": "object",
+          "required": ["databaseUrl"],
+          "additionalProperties": false,
+          "properties": {
+            "databaseUrl": {
+              "description": "jdbc connection string для текущей базы данных",
+              "$ref": "#/definitions/strValues/databaseConnectionString"
+            },
+            "batchDatabaseGrpcServerProcessCount": {
+              "description": "Кол-во ОС-процессов занимаемых GRPC-сервером DB-компонента",
+              "type": "number"
+            },
+            "grpcMaxMsgSize": {
+              "description": "Максимальный размер GRPC-сообщения (Mb)",
+              "type": "number"
+            },
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/vaultAgent"
+            },
+            "dispatcherResources": {
+              "$ref": "#/definitions/resources"
+            },
+            "databaseResources": {
+              "$ref": "#/definitions/resources"
+            }
+          }
+        }
+      }
+    },
+    "loggerPlugin": {
+      "description": "настройки плагина вывода для контроллера logger (приоритет forward > http > kafka)",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "forward": {
+          "description": "Конфигурация для отправки логов в сборщик fluentd",
+          "type": "object",
+          "required": [
+            "serverName",
+            "address",
+            "clientKeyPairSecret",
+            "caBundleSecret"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "serverName": {
+              "description": "<Имя сервера>",
+              "$ref": "#/definitions/strValues/sslServerName"
+            },
+            "address": {
+              "$ref": "#/definitions/socket"
+            },
+            "verifyHostname": {
+              "description": "Проверять сертификаты сервера при установлении соединений с использованием TLS",
+              "type": "boolean"
+            },
+            "clientKeyPairSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "caBundleSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            }
+          }
+        },
+        "http": {
+          "description": "Конфигурация для отправки логов в сборщик http (на эндпоинт)",
+          "type": "object",
+          "required": ["endpoint", "clientKeyPairSecret", "caBundleSecret"],
+          "additionalProperties": false,
+          "properties": {
+            "endpoint": {
+              "description": "<Endpoint для отправки логов (без указания протокола)>",
+              "$ref": "#/definitions/strValues/urlNoProto"
+            },
+            "verifyHostname": {
+              "description": "Проверять сертификаты сервера при установлении соединений с использованием TLS",
+              "type": "boolean"
+            },
+            "clientKeyPairSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "caBundleSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            }
+          }
+        },
+        "kafka": {
+          "description": "Конфигурация для отправки логов в topic kafka",
+          "type": "object",
+          "required": [
+            "brokers",
+            "topic",
+            "clientKeyPairSecret",
+            "caBundleSecret"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "brokers": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/strValues/socketAddress"
+              }
+            },
+            "topic": {
+              "description": "Kafka topic name",
+              "$ref": "#/definitions/strValues/kafkaTopicName"
+            },
+            "verifyHostname": {
+              "description": "Проверять сертификаты брокеров при установлении соединений с использованием TLS",
+              "type": "boolean"
+            },
+            "clientKeyPairSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            },
+            "caBundleSecret": {
+              "$ref": "#/definitions/strValues/secretName"
+            }
+          }
+        }
+      }
+    },
+    "loggerOutput": {
+      "description": "настройки вывода контроллера logger",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 2,
+      "additionalProperties": false,
+      "properties": {
+        "log": {
+          "$ref": "#/definitions/loggerPlugin"
+        },
+        "metrics": {
+          "$ref": "#/definitions/loggerPlugin"
+        }
+      }
+    },
+    "logger": {
+      "description": "Конфигурация controller-logger",
+      "type": "object",
+      "required": ["techOutput"],
+      "additionalProperties": false,
+      "properties": {
+        "techOutput": {
+          "$ref": "#/definitions/loggerOutput"
+        },
+        "businessOutput": {
+          "$ref": "#/definitions/loggerOutput"
+        },
+        "settings": {
+          "description": "Конфигурация",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/vaultAgent"
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            },
+            "autoscaling": {
+              "$ref": "#/definitions/autoscaling"
+            }
+          }
+        }
+      }
+    },
+    "hadoop": {
+      "description": "Конфигурация controller-hadoop",
+      "type": "object",
+      "required": [
+        "clusterDescription",
+        "krb5ConfSecret",
+        "keytabSecret",
+        "principalSecret",
+        "caBundleSecret",
+        "clientKeyPairSecret"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "krb5ConfSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "keytabSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "principalSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "caBundleSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "clientKeyPairSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "delegationTokenRenewalInterval": {
+          "description": "Интервал времени (в миллисекундах) между последовательными обновлениями Hadoop Delegation Token",
+          "type": "number"
+        },
+        "failOnTooLongDelegationTokenRenewalInterval": {
+          "description": "Не запускать сервис при невыполнении проверки длительности интервала времени между обновлениями Hadoop Delegation Token",
+          "type": "boolean"
+        },
+        "clusterDescription": {
+          "description": "Описание кластера Hadoop",
+          "type": "object",
+          "required": ["topology"],
+          "additionalProperties": false,
+          "properties": {
+            "topology": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": ["nameNodes", "dataNodes"],
+              "properties": {
+                "nameNodes": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "$ref": "#/definitions/socket"
+                  }
+                },
+                "dataNodes": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "$ref": "#/definitions/socket"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "settings": {
+          "description": "Конфигурация",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/vaultAgent"
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            },
+            "autoscaling": {
+              "$ref": "#/definitions/autoscaling"
+            }
+          }
+        }
+      }
+    },
+    "kafka": {
+      "description": "Конфигурация controller-kafka",
+      "type": "object",
+      "required": ["caBundleSecret", "clientKeyPairSecret", "settings"],
+      "additionalProperties": false,
+      "properties": {
+        "caBundleSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "clientKeyPairSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "version": {
+          "$ref": "#/definitions/strValues/controllerKafkaVersion"
+        },
+        "settings": {
+          "description": "Конфигурация",
+          "type": "object",
+          "required": ["bootstrapServers"],
+          "additionalProperties": false,
+          "properties": {
+            "messageProcessing": {
+              "$ref": "#/definitions/controllerKafkaMessageProcessingConfig"
+            },
+            "bootstrapServers": {
+              "description": "Список брокеров Kafka",
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/strValues/socketAddress"
+              }
+            },
+            "ignite": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["topic", "igniteUserConf"],
+              "properties": {
+                "topic": {
+                  "description": "Топик для загрузки данных в Ignite",
+                  "$ref": "#/definitions/strValues/kafkaTopicName"
+                },
+                "igniteUserConf": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["caBundleSecret", "clusterNodeKeyPairSecret"],
+                  "properties": {
+                    "caBundleSecret": {
+                      "$ref": "#/definitions/strValues/secretName"
+                    },
+                    "clusterNodeKeyPairSecret": {
+                      "$ref": "#/definitions/strValues/secretName"
+                    }
+                  }
+                }
+              }
+            },
+            "asyncOutputTopic": {
+              "description": "Асинхронный топик kafka",
+              "$ref": "#/definitions/strValues/kafkaTopicName"
+            },
+            "maxInboundMessageSize": {
+              "description": "Максимальный размер в байтах gRPC-сообщения",
+              "type": "number"
+            },
+            "maxInboundMetadataSize": {
+              "description": "Максимальный размер в байтах метаданных в gRPC-запросе",
+              "type": "number"
+            },
+            "listenerConcurrency": {
+              "description": "Количество потоков для обработки входящих сообщений",
+              "type": "number"
+            },
+            "consumer": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "groupId": {
+                  "description": "Kafka consumer group id. Used in load balancing mechanism",
+                  "$ref": "#/definitions/strValues/kafkaConsumerGroupId"
+                },
+                "fetchMaxBytes": {
+                  "type": "number"
+                },
+                "maxPartitionFetchBytes": {
+                  "type": "number"
+                },
+                "maxPollIntervalMs": {
+                  "type": "number"
+                },
+                "maxPollRecords": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "sessionTimeoutMs": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            "producer": {
+              "description": "Настройки producer'а Kafka",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "maxRequestSize": {
+                  "type": "number"
+                }
+              }
+            },
+            "verifyServers": {
+              "description": "Включить/выключить проверку сертификатов брокеров Kafka",
+              "type": "boolean",
+              "additionalProperties": false
+            },
+            "dataChunkSize": {
+              "description": "Максимальный размер (в байтах) тела сообщений в 'выходных' топиках",
+              "type": "number"
+            },
+            "retryMaxAttempts": {
+              "description": "включает механизм retry если больше 0 и задает количество повторных попыток обработать сообщение.",
+              "type": "number"
+            },
+            "retryBackoffPeriod": {
+              "description": "при включенном механизме retry позволяет управлять задержкой между попытками обработать сообщение через задание времени в миллисекундах (задание длительной задержки может сказаться на производительности в моменте задержки другие сообщения не обрабатываются)",
+              "type": "number"
+            },
+            "recoveryOutputTopic": {
+              "description": " включает механизм recovery если задать имя топика, в который будет перекладываться сообщение которое не удалось обработать (в том числе и механизмом retry если он был включен).",
+              "$ref": "#/definitions/strValues/kafkaTopicName"
+            },
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/vaultAgent"
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            },
+            "autoscaling": {
+              "$ref": "#/definitions/autoscaling"
+            }
+          }
+        }
+      }
+    },
+    "istioProxy": {
+      "description": "Настройки Sidecar-ов Istio",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resources": {
+          "$ref": "#/definitions/resources"
+        }
+      }
+    },
+    "vaultAgent": {
+      "description": "Настройки Sidecar-ов Vault Agent",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resources": {
+          "$ref": "#/definitions/resources"
+        }
+      }
+    },
+    "proxy": {
+      "description": "Конфигурация controller-proxy",
+      "type": "object",
+      "required": ["caBundleSecret", "serverKeyPairSecret", "users"],
+      "additionalProperties": false,
+      "properties": {
+        "caBundleSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "serverKeyPairSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "users": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/strValues/proxyUserCn"
+          }
+        },
+        "settings": {
+          "description": "Конфигурация",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "conf": {
+              "description": "Конфигурация соединения",
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": false,
+              "properties": {
+                "clientMaxBodySize": {
+                  "description": "Max request body size (megabytes). See: https://nginx.org/ru/docs/http/ngx_http_core_module.html#client_max_body_size",
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mapHashBucketSize": {
+                  "description": "See: https://nginx.org/ru/docs/http/ngx_http_map_module.html#map_hash_bucket_size",
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "gunzip": {
+                  "description": "See: https://nginx.org/ru/docs/http/ngx_http_gunzip_module.html#gunzip",
+                  "type": "boolean"
+                },
+                "http2": {
+                  "description": "HTTP2 enabled",
+                  "type": "boolean"
+                },
+                "proxyReadTimeout": {
+                  "description": "Timeout (seconds). See: https://nginx.org/ru/docs/http/ngx_http_proxy_module.html#proxy_read_timeout",
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/vaultAgent"
+            },
+            "nginxPrometheusExporter": {
+              "description": "Настройки Prometheus Exporter",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "resources": {
+                  "$ref": "#/definitions/resources"
+                }
+              }
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            },
+            "autoscaling": {
+              "$ref": "#/definitions/autoscaling"
+            }
+          }
+        }
+      }
+    },
+    "istioIngress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caBundleSecret", "serverKeyPairSecret", "users"],
+      "properties": {
+        "caBundleSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "serverKeyPairSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "users": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/strValues/proxyUserCn"
+          }
+        },
+        "retries": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "required": ["applyTo", "retries"],
+                "properties": {
+                  "applyTo": {
+                    "enum": ["ALL"]
+                  },
+                  "retries": {
+                    "$ref": "#/definitions/retries"
+                  }
+                }
+              },
+              {
+                "additionalProperties": false,
+                "required": ["applyTo", "retries"],
+                "properties": {
+                  "applyTo": {
+                    "enum": ["MODELS"]
+                  },
+                  "retries": {
+                    "$ref": "#/definitions/retries"
+                  }
+                }
+              },
+              {
+                "additionalProperties": false,
+                "required": ["applyTo", "retries"],
+                "properties": {
+                  "applyTo": {
+                    "enum": ["PROMETHEUS"]
+                  },
+                  "retries": {
+                    "$ref": "#/definitions/retries"
+                  }
+                }
+              },
+              {
+                "additionalProperties": false,
+                "required": ["applyTo", "modelName", "retries"],
+                "properties": {
+                  "applyTo": {
+                    "enum": ["MODEL"]
+                  },
+                  "modelName": {
+                    "$ref": "#/definitions/strValues/resourceName"
+                  },
+                  "retries": {
+                    "$ref": "#/definitions/retries"
+                  }
+                }
+              },
+              {
+                "additionalProperties": false,
+                "required": ["applyTo", "modelName", "routeName", "retries"],
+                "properties": {
+                  "applyTo": {
+                    "enum": ["MODEL_ROUTE"]
+                  },
+                  "modelName": {
+                    "$ref": "#/definitions/strValues/resourceName"
+                  },
+                  "routeName": {
+                    "$ref": "#/definitions/strValues/modelRouteName"
+                  },
+                  "retries": {
+                    "$ref": "#/definitions/retries"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "rateLimit": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "required": ["applyTo", "tokenBucket"],
+                "properties": {
+                  "applyTo": {
+                    "enum": ["GATEWAY"]
+                  },
+                  "tokenBucket": {
+                    "$ref": "#/definitions/tokenBucket"
+                  }
+                }
+              },
+              {
+                "additionalProperties": false,
+                "required": ["applyTo", "tokenBucket"],
+                "properties": {
+                  "applyTo": {
+                    "enum": ["MODELS_GATEWAY"]
+                  },
+                  "tokenBucket": {
+                    "$ref": "#/definitions/tokenBucket"
+                  }
+                }
+              },
+              {
+                "additionalProperties": false,
+                "required": ["applyTo", "tokenBucket"],
+                "properties": {
+                  "applyTo": {
+                    "enum": ["PROMETHEUS_GATEWAY"]
+                  },
+                  "tokenBucket": {
+                    "$ref": "#/definitions/tokenBucket"
+                  }
+                }
+              },
+              {
+                "additionalProperties": false,
+                "required": [
+                  "applyTo",
+                  "modelName",
+                  "routeName",
+                  "tokenBucket"
+                ],
+                "properties": {
+                  "applyTo": {
+                    "enum": ["MODEL_ROUTE"]
+                  },
+                  "modelName": {
+                    "$ref": "#/definitions/strValues/resourceName"
+                  },
+                  "routeName": {
+                    "$ref": "#/definitions/strValues/modelRouteName"
+                  },
+                  "tokenBucket": {
+                    "$ref": "#/definitions/tokenBucket"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ingress": {
+              "$ref": "#/definitions/resources"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/resources"
+            }
+          }
+        },
+        "autoscaling": {
+          "$ref": "#/definitions/autoscaling"
+        }
+      }
+    },
+    "istioEgress": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "egress": {
+              "$ref": "#/definitions/resources"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/resources"
+            }
+          }
+        },
+        "autoscaling": {
+          "$ref": "#/definitions/autoscaling"
+        }
+      }
+    },
+    "retries": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "perTryTimeout": {
+          "type": "string",
+          "pattern": "^[1-9]+[0-9]*(h|m|s|ms)$"
+        },
+        "retryOn": {
+          "type": "string",
+          "pattern": "^([0-9]+|[a-z]+[a-z-]*[a-z]+)(,([0-9]+|[a-z]+[a-z-]*[a-z]+)+)*$"
+        }
+      }
+    },
+    "tokenBucket": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tokens_per_fill": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fill_interval": {
+          "type": "string",
+          "pattern": "^[1-9]+[0-9]*(h|m|s|ms)$"
+        }
+      }
+    },
+    "httpServerSettings": {
+      "description": "Настройки HTTP-сервера",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxWorkers": {
+          "description": "Максимальное количество потоков для обработки запросов",
+          "type": "integer"
+        },
+        "clientMaxBodySize": {
+          "description": "Максимальный размер тела сообщения",
+          "type": "integer"
+        }
+      }
+    },
+    "grpcServerSettings": {
+      "description": "Настройки gRPC-сервера",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxWorkers": {
+          "description": "Максимальное количество потоков для обработки запросов",
+          "type": "integer"
+        },
+        "maxReceiveMessageLength": {
+          "description": "Максимальный размер тела сообщения",
+          "type": "integer"
+        }
+      }
+    },
+    "globalRateLimitParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestsPerUnit", "unit"],
+      "properties": {
+        "requestsPerUnit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unit": {
+          "$ref": "#/definitions/strValues/globalRateLimitUnit"
+        }
+      }
+    },
+    "modelRateLimitConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "rateLimit"],
+      "properties": {
+        "path": {
+          "$ref": "#/definitions/strValues/modelMethodHttpPath"
+        },
+        "rateLimit": {
+          "$ref": "#/definitions/globalRateLimitParams"
+        }
+      }
+    },
+    "tritonServerRateLimitConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "rateLimit"],
+      "properties": {
+        "path": {
+          "$ref": "#/definitions/strValues/tritonModelHttpPath"
+        },
+        "rateLimit": {
+          "$ref": "#/definitions/globalRateLimitParams"
+        }
+      }
+    },
+    "model": {
+      "description": "Конфигурация сервиса модели",
+      "type": "object",
+      "required": ["name", "image"],
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/modelAnnotations",
+          "description": "Аннотации"
+        },
+        "name": {
+          "$ref": "#/definitions/strValues/resourceName"
+        },
+        "pullSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "logServiceName": {
+          "description": "Значение для передачи в систему мониторинга (в поле servicename в структуре сообщений логов)",
+          "$ref": "#/definitions/strValues/notBlankText"
+        },
+        "language": {
+          "$ref": "#/definitions/language"
+        },
+        "mountRunScripts": {
+          "description": "Включение/выключение подмены run-скриптов моделей",
+          "type": "boolean"
+        },
+        "description": {
+          "description": "Информация о модели",
+          "$ref": "#/definitions/strValues/arbitraryText"
+        },
+        "image": {
+          "$ref": "#/definitions/strValues/dockerImageUrl"
+        },
+        "labels": {
+          "$ref": "#/definitions/labels",
+          "description": "Метки"
+        },
+        "settings": {
+          "description": "Конфигурация",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "rateLimits": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/modelRateLimitConfig"
+              }
+            },
+            "output": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["type", "name", "spec"],
+                "properties": {
+                  "type": {
+                    "enum": ["Storage"]
+                  },
+                  "name": {
+                    "$ref": "#/definitions/strValues/resourceName"
+                  },
+                  "spec": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "retries": {
+                        "$ref": "#/definitions/retries"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "igniteUser": {
+              "$ref": "#/definitions/strValues/igniteUserName"
+            },
+            "httpServer": {
+              "description": "Настройки HTTP-сервера модели",
+              "$ref": "#/definitions/httpServerSettings"
+            },
+            "grpcServer": {
+              "description": "Настройки gRPC-сервера модели",
+              "$ref": "#/definitions/grpcServerSettings"
+            },
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "kafkaTopics": {
+              "description": "Конфигурация топиков для контроллера Kafka",
+              "type": "array",
+              "additionalProperties": false,
+              "minItems": 1,
+              "maxItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["in"],
+                "additionalProperties": false,
+                "properties": {
+                  "in": {
+                    "description": "Топик Kafka для входящих сообщений",
+                    "$ref": "#/definitions/strValues/kafkaTopicName"
+                  },
+                  "out": {
+                    "description": "Топик Kafka для исходящих сообщений (ответов модели)",
+                    "$ref": "#/definitions/strValues/kafkaTopicName"
+                  }
+                }
+              }
+            },
+            "cronJob": {
+              "description": "Конфигурация CronJob",
+              "type": "object",
+              "required": ["schedule"],
+              "additionalProperties": false,
+              "properties": {
+                "schedule": {
+                  "description": "Частота срабатывания в формате cron: * * * * *",
+                  "$ref": "#/definitions/strValues/cron"
+                },
+                "concurrencyPolicy": {
+                  "description": "Политика concurrency Job",
+                  "enum": ["Allow", "Forbid", "Replace"]
+                },
+                "startingDeadlineSeconds": {
+                  "description": "Deadline для запуска Job (сек)",
+                  "type": "number"
+                },
+                "endpoint": {
+                  "description": "cron endpoint (/example)",
+                  "$ref": "#/definitions/strValues/absPath"
+                },
+                "settings": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "istioProxy": {
+                      "$ref": "#/definitions/istioProxy"
+                    }
+                  }
+                }
+              }
+            },
+            "gpu": {
+              "description": "Запуск на GPU",
+              "type": "boolean"
+            },
+            "nvidiaVisibleDevices": {
+              "description": "Setting NVIDIA_VISIBLE_DEVICES environment",
+              "$ref": "#/definitions/strValues/notBlankText"
+            },
+            "resources": {
+              "$ref": "#/definitions/modelResources"
+            },
+            "autoscaling": {
+              "$ref": "#/definitions/autoscaling"
+            },
+            "recSys": {
+              "$ref": "#/definitions/recSys"
+            },
+            "readinessProbe": {
+              "$ref": "#/definitions/readinessProbe"
+            },
+            "livenessProbe": {
+              "$ref": "#/definitions/livenessProbe"
+            },
+            "nodeSelector": {
+              "$ref": "#/definitions/nodeSelector"
+            }
+          }
+        }
+      }
+    },
+    "tritonServer": {
+      "type": "object",
+      "required": ["name", "image"],
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/modelAnnotations"
+        },
+        "name": {
+          "$ref": "#/definitions/strValues/resourceName"
+        },
+        "routes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/modelRoute"
+          }
+        },
+        "labels": {
+          "$ref": "#/definitions/labels"
+        },
+        "image": {
+          "$ref": "#/definitions/strValues/dockerImageUrl"
+        },
+        "pullSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "nvidiaVisibleDevices": {
+          "$ref": "#/definitions/strValues/notBlankText"
+        },
+        "autoscaling": {
+          "$ref": "#/definitions/autoscaling"
+        },
+        "resources": {
+          "$ref": "#/definitions/modelResources"
+        },
+        "istioProxy": {
+          "$ref": "#/definitions/istioProxy"
+        },
+        "readinessProbe": {
+          "$ref": "#/definitions/tritonReadinessProbe"
+        },
+        "livenessProbe": {
+          "$ref": "#/definitions/tritonLivenessProbe"
+        },
+        "nodeSelector": {
+          "$ref": "#/definitions/nodeSelector"
+        }
+      }
+    },
+    "mlFlowModel": {
+      "type": "object",
+      "required": ["name", "image"],
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/modelAnnotations"
+        },
+        "name": {
+          "$ref": "#/definitions/strValues/resourceName"
+        },
+        "routes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/modelRoute"
+          }
+        },
+        "labels": {
+          "$ref": "#/definitions/labels"
+        },
+        "image": {
+          "$ref": "#/definitions/strValues/dockerImageUrl"
+        },
+        "pullSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "autoscaling": {
+          "$ref": "#/definitions/autoscaling"
+        },
+        "resources": {
+          "$ref": "#/definitions/modelResources"
+        },
+        "istioProxy": {
+          "$ref": "#/definitions/istioProxy"
+        },
+        "readinessProbe": {
+          "$ref": "#/definitions/tritonReadinessProbe"
+        },
+        "livenessProbe": {
+          "$ref": "#/definitions/tritonLivenessProbe"
+        },
+        "nodeSelector": {
+          "$ref": "#/definitions/nodeSelector"
+        },
+        "rateLimits": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/tritonServerRateLimitConfig"
+          }
+        }
+      }
+    },
+    "kafkaTopicsConfig": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "in": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/definitions/strValues/kafkaTopicName"
+            }
+          },
+          "out": {
+            "$ref": "#/definitions/strValues/kafkaTopicName"
+          }
+        }
+      }
+    },
+    "kafkaConsumerConfig": {
+      "type": "object",
+      "required": ["topics", "groupId"],
+      "additionalProperties": false,
+      "properties": {
+        "topics": {
+          "$ref": "#/definitions/kafkaTopicsConfig"
+        },
+        "maxPollRecords": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sessionTimeoutMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "listenerConcurrency": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "groupId": {
+          "$ref": "#/definitions/strValues/kafkaConsumerGroupId"
+        },
+        "fetchMaxBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxPartitionFetchBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxPollIntervalMs": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "kafkaStreamReader": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "image", "kafka"],
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/strValues/resourceName"
+        },
+        "image": {
+          "$ref": "#/definitions/strValues/dockerImageUrl"
+        },
+        "labels": {
+          "$ref": "#/definitions/labels"
+        },
+        "annotations": {
+          "$ref": "#/definitions/modelAnnotations"
+        },
+        "pullSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "language": {
+          "$ref": "#/definitions/language"
+        },
+        "description": {
+          "$ref": "#/definitions/strValues/arbitraryText"
+        },
+        "resources": {
+          "$ref": "#/definitions/resources"
+        },
+        "istioProxy": {
+          "$ref": "#/definitions/istioProxy"
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "readinessProbe": {
+          "$ref": "#/definitions/readinessProbe"
+        },
+        "livenessProbe": {
+          "$ref": "#/definitions/livenessProbe"
+        },
+        "kafka": {
+          "type": "object",
+          "required": ["bootstrapServers", "ssl", "consumer"],
+          "additionalProperties": false,
+          "properties": {
+            "version": {
+              "$ref": "#/definitions/strValues/controllerKafkaVersion"
+            },
+            "messageProcessing": {
+              "$ref": "#/definitions/controllerKafkaMessageProcessingConfig"
+            },
+            "bootstrapServers": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/strValues/socketAddress"
+              }
+            },
+            "ssl": {
+              "$ref": "#/definitions/clientSslConfig"
+            },
+            "consumer": {
+              "$ref": "#/definitions/kafkaConsumerConfig"
+            },
+            "retries": {
+              "type": "object",
+              "required": ["maxAttempts"],
+              "additionalProperties": false,
+              "properties": {
+                "maxAttempts": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "backoffPeriod": {
+                  "type": "integer",
+                  "minimum": 100
+                }
+              }
+            },
+            "recoveryTopic": {
+              "$ref": "#/definitions/strValues/kafkaTopicName"
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            },
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/vaultAgent"
+            }
+          }
+        }
+      }
+    },
+    "recSysServer": {
+      "description": "Настройки сервера RecSys",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "upstream"],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/strValues/recSysServerId"
+        },
+        "name": {
+          "$ref": "#/definitions/strValues/hostname"
+        },
+        "sslName": {
+          "description": "Overrides the server name used to verify server certificate. See: https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_ssl_name",
+          "$ref": "#/definitions/strValues/sslServerName"
+        },
+        "sslVerifyDepth": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "upstream": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/socket"
+          }
+        }
+      }
+    },
+    "recSys": {
+      "description": "Настройки для контроллера RecSys",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["servers"],
+      "properties": {
+        "servers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/recSysServer"
+          }
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/vaultAgent"
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            },
+            "autoscaling": {
+              "$ref": "#/definitions/autoscaling"
+            }
+          }
+        }
+      }
+    },
+    "resources": {
+      "description": "Выделяемые ресурсы (лимит и предоставляемые)",
+      "type": "object",
+      "required": ["limits", "requests"],
+      "patternProperties": {
+        "limits": {
+          "$ref": "#/definitions/resourcesEntry"
+        },
+        "requests": {
+          "$ref": "#/definitions/resourcesEntry"
+        }
+      },
+      "additionalProperties": false
+    },
+    "resourcesEntry": {
+      "description": "Выделяемые ресурсы",
+      "type": "object",
+      "required": ["cpu", "memory"],
+      "properties": {
+        "cpu": {
+          "$ref": "#/definitions/strValues/cpu"
+        },
+        "memory": {
+          "$ref": "#/definitions/strValues/memory"
+        }
+      },
+      "additionalProperties": false
+    },
+    "modelResources": {
+      "description": "Выделяемые ресурсы (лимит и предоставляемые)",
+      "type": "object",
+      "required": ["limits", "requests"],
+      "properties": {
+        "limits": {
+          "$ref": "#/definitions/modelResourcesEntry"
+        },
+        "requests": {
+          "$ref": "#/definitions/modelResourcesEntry"
+        }
+      },
+      "additionalProperties": false
+    },
+    "modelResourcesEntry": {
+      "description": "Выделяемые ресурсы",
+      "type": "object",
+      "required": ["cpu", "memory"],
+      "properties": {
+        "cpu": {
+          "$ref": "#/definitions/strValues/cpu"
+        },
+        "memory": {
+          "$ref": "#/definitions/strValues/memory"
+        },
+        "gpu": {
+          "$ref": "#/definitions/gpu"
+        }
+      },
+      "additionalProperties": false
+    },
+    "buildResources": {
+      "description": "Ресурсы, предоставляемые сборочному контейнеру",
+      "type": "object",
+      "required": ["limits", "requests"],
+      "properties": {
+        "limits": {
+          "$ref": "#/definitions/buildResourcesEntry"
+        },
+        "requests": {
+          "$ref": "#/definitions/buildResourcesEntry"
+        }
+      },
+      "additionalProperties": false
+    },
+    "buildResourcesEntry": {
+      "type": "object",
+      "required": ["cpu", "memory"],
+      "properties": {
+        "cpu": {
+          "$ref": "#/definitions/strValues/cpu"
+        },
+        "memory": {
+          "$ref": "#/definitions/strValues/memory"
+        },
+        "ephemeral-storage": {
+          "$ref": "#/definitions/strValues/ephemeralStorage"
+        }
+      },
+      "additionalProperties": false
+    },
+    "gpu": {
+      "type": "integer"
+    },
+    "autoscaling": {
+      "type": "object",
+      "properties": {
+        "maxReplicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minReplicas": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "tritonReadinessProbe": {
+      "$ref": "#/definitions/tritonLivenessProbe"
+    },
+    "tritonLivenessProbe": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "failureThreshold": {
+          "type": "integer"
+        },
+        "initialDelaySeconds": {
+          "type": "integer"
+        },
+        "periodSeconds": {
+          "type": "integer"
+        },
+        "successThreshold": {
+          "type": "integer"
+        },
+        "timeoutSeconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "readinessProbe": {
+      "$ref": "#/definitions/livenessProbe"
+    },
+    "livenessProbe": {
+      "type": "object",
+      "properties": {
+        "failureThreshold": {
+          "type": "number"
+        },
+        "initialDelaySeconds": {
+          "type": "number"
+        },
+        "periodSeconds": {
+          "type": "number"
+        },
+        "successThreshold": {
+          "type": "number"
+        },
+        "timeoutSeconds": {
+          "type": "number"
+        },
+        "port": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "storage": {
+      "description": "Конфигурация controller-storage",
+      "type": "object",
+      "required": [
+        "authSecret",
+        "caBundleSecret",
+        "clientKeyPairSecret",
+        "settings"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "caBundleSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "clientKeyPairSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "authSecret": {
+          "$ref": "#/definitions/strValues/secretName"
+        },
+        "settings": {
+          "description": "Конфигурация",
+          "type": "object",
+          "required": ["endpoint"],
+          "additionalProperties": false,
+          "properties": {
+            "endpoint": {
+              "$ref": "#/definitions/socket"
+            },
+            "istioProxy": {
+              "$ref": "#/definitions/istioProxy"
+            },
+            "vaultAgent": {
+              "$ref": "#/definitions/vaultAgent"
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            },
+            "autoscaling": {
+              "$ref": "#/definitions/autoscaling"
+            }
+          }
+        }
+      }
+    },
+    "profiler": {
+      "description": "Конфигурация profiler",
+      "type": "object",
+      "items": {
+        "type": "object",
+        "required": [
+          "settings",
+          "jenkinsCaBundleSecret",
+          "jenkinsClientKeyPairSecret",
+          "jenkinsClientCnSecret",
+          "jenkinsCredSecret",
+          "configFileSecret",
+          "openShiftTokenSecret",
+          "requestDataSecret"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "jenkinsCaBundleSecret": {
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "jenkinsClientKeyPairSecret": {
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "jenkinsClientCnSecret": {
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "jenkinsCredSecret": {
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "configFileSecret": {
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "openShiftTokenSecret": {
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "requestDataSecret": {
+            "$ref": "#/definitions/strValues/secretName"
+          },
+          "settings": {
+            "description": "Конфигурация",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["jenkinsJobUrl", "modelUrl", "modelStand"],
+            "properties": {
+              "jenkinsJobUrl": {
+                "description": "URL Jenkins Job для деплоя модели",
+                "$ref": "#/definitions/strValues/httpUrl"
+              },
+              "modelUrl": {
+                "description": "URL на route до модели",
+                "$ref": "#/definitions/strValues/httpUrl"
+              },
+              "modelStand": {
+                "description": "Имя стенда, на котором развернута модель (IFT, IFT_OS4_SIGMA ... )",
+                "$ref": "#/definitions/strValues/clusterName"
+              },
+              "istioProxy": {
+                "$ref": "#/definitions/istioProxy"
+              },
+              "vaultAgent": {
+                "$ref": "#/definitions/vaultAgent"
+              },
+              "resources": {
+                "$ref": "#/definitions/resources"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
