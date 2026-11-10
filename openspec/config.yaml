@@ -1,5 +1,9 @@
 schema: spec-driven
 
+context: |
+  JSON Schema of the mef-config lives in schemas/mef-config.schema.json
+  (large file, ~4700 lines: read only the parts relevant to the task).
+
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.
 # Include constraints an agent cannot infer by reading the code.
